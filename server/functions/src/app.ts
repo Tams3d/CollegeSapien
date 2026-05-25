@@ -1,0 +1,101 @@
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import * as admin from 'firebase-admin';
+import swaggerUi from 'swagger-ui-express';
+import { specs } from './shared/docs/swagger';
+import { enforceAppCheck } from './shared/middlewares/app-check.middleware';
+import { requestLogger } from './shared/logger';
+import authRoutes from './app/auth/auth.route';
+import attendanceRoutes from './app/attendance/attendance.route';
+import timetableRoutes from './app/timetable/timetable.route';
+import cgpaRoutes from './app/cgpa/cgpa.route';
+import resourceRoutes from './app/resources/resources.route';
+import aiRoutes from './app/ai/ai.route';
+import adminRoutes from './app/admin/admin.route';
+import collegeRoutes from './app/colleges/colleges.route';
+import subjectRoutes from './app/subjects/subjects.route';
+import cmsRoutes from './app/cms/cms.route';
+
+const app = express();
+
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
+
+const corsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: corsOrigins.length > 0 ? corsOrigins : true,
+    credentials: true,
+  })
+);
+app.use(cookieParser());
+app.use((req: any, res, next) => {
+  if (req.rawBody !== undefined) {
+    // Cloud Run (Firebase Functions v2) pre-consumes the stream; rawBody is a Buffer
+    if (!req.body || Object.keys(req.body).length === 0) {
+      try {
+        req.body = req.rawBody.length ? JSON.parse(req.rawBody.toString('utf8')) : {};
+      } catch {
+        req.body = {};
+      }
+    }
+    return next();
+  }
+  express.json({ limit: '8mb' })(req, res, next);
+});
+app.use(requestLogger);
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Frame-Options', 'DENY');
+  next();
+});
+
+// Handle Swagger Redirect Issue in Firebase Emulator
+// We use a custom path for swagger-ui-express to prevent incorrect absolute redirects
+const swaggerOptions = {
+  swaggerOptions: {
+    url: '/api/docs/swagger.json',
+  },
+};
+
+app.get('/api/docs/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(specs);
+});
+
+// Serve Swagger UI with specific paths to avoid emulator redirect issues
+app.use('/api/docs', swaggerUi.serve);
+app.get(
+  '/api/docs',
+  swaggerUi.setup(specs, {
+    ...swaggerOptions,
+    customCss: '.swagger-ui .topbar { display: none }',
+  })
+);
+
+app.get('/api/v1/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'CodeSapiens API is healthy' });
+});
+
+app.use(enforceAppCheck);
+
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/attendance', attendanceRoutes);
+app.use('/api/v1/timetable', timetableRoutes);
+app.use('/api/v1/cgpa', cgpaRoutes);
+app.use('/api/v1/resources', resourceRoutes);
+app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/colleges', collegeRoutes);
+app.use('/api/v1/subjects', subjectRoutes);
+
+app.use('/api/v1/cms', cmsRoutes);
+
+export { app };

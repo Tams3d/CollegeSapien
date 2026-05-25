@@ -1,0 +1,106 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function role() {
+      return signedIn() && request.auth.token.role is string
+        ? request.auth.token.role
+        : 'user';
+    }
+
+    function isSuperAdmin() {
+      return role() == 'superadmin';
+    }
+
+    function isModeratorForCollege(collegeId) {
+      return isSuperAdmin() ||
+        role() == 'admin' ||
+        (role() == 'moderator' && request.auth.token.collegeId == collegeId);
+    }
+
+    function notDeleted() {
+      return !('deletedAt' in resource.data) || resource.data.deletedAt == null;
+    }
+
+    function verified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+
+    match /colleges/{collegeId} {
+      allow get, list: if notDeleted();
+      allow create, update, delete: if verified() && isSuperAdmin();
+    }
+
+    match /subjects/{subjectId} {
+      allow get, list: if notDeleted();
+      allow create: if verified()
+        && request.resource.data.collegeId is string
+        && isOwner(request.resource.data.createdBy);
+      allow update, delete: if verified() && isModeratorForCollege(resource.data.collegeId);
+    }
+
+    match /syllabus/{syllabusId} {
+      allow get, list: if verified() && notDeleted();
+      allow create, update, delete: if verified()
+        && isModeratorForCollege(request.resource.data.collegeId);
+    }
+
+    match /hub_resources/{resourceId} {
+      allow get, list: if verified()
+        && notDeleted()
+        && (resource.data.status == 'approved'
+          || isOwner(resource.data.uploadedBy)
+          || isModeratorForCollege(resource.data.collegeId));
+      allow create: if verified()
+        && isOwner(request.resource.data.uploadedBy)
+        && request.resource.data.status == 'pending_moderation';
+      allow update, delete: if verified() && (
+        isModeratorForCollege(resource.data.collegeId) ||
+        (isOwner(resource.data.uploadedBy) && resource.data.status == 'pending_moderation')
+      );
+    }
+
+    match /reports/{reportId} {
+      allow create: if verified() && isOwner(request.resource.data.reportedBy);
+      allow get, list, update, delete: if verified()
+        && isModeratorForCollege(resource.data.collegeId);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId)
+        || (verified() && isModeratorForCollege(resource.data.collegeId));
+      allow list: if verified() && isSuperAdmin() && request.query.limit <= 100;
+      allow create: if false;
+      allow update: if isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'department', 'semester', 'attendanceThreshold', 'profilePic', 'updatedAt']);
+      allow delete: if false;
+
+      match /attendance/{attendanceId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && request.resource.data.subjectId is string
+          && request.resource.data.date is string
+          && request.resource.data.dateKey is string
+          && request.resource.data.status in ['Present', 'Absent', 'Leave'];
+        allow delete: if isOwner(userId);
+      }
+
+      match /semesters/{semesterId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
