@@ -11,14 +11,40 @@ const password = ref('')
 const error = ref('')
 const loading = ref(false)
 
+interface AuthTokenResult {
+  claims: Record<string, unknown>
+}
+
+interface AuthUser {
+  uid: string
+  email?: string | null
+  displayName?: string | null
+  getIdTokenResult: (forceRefresh?: boolean) => Promise<AuthTokenResult>
+}
+
+const isAuthUser = (value: unknown): value is AuthUser => {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as { uid?: unknown; getIdTokenResult?: unknown }
+  return typeof candidate.uid === 'string' && typeof candidate.getIdTokenResult === 'function'
+}
+
+const getErrorMessage = (err: unknown, fallback: string) => {
+  if (err && typeof err === 'object' && 'message' in err) {
+    const message = (err as { message?: unknown }).message
+    if (typeof message === 'string') return message
+  }
+  return fallback
+}
+
 const handleGoogleLogin = async () => {
   loading.value = true
   error.value = ''
   try {
     const user = await signInWithGoogle()
+    if (!isAuthUser(user)) throw new Error('Unexpected auth response.')
     await finalizeLogin(user)
-  } catch (err: any) {
-    error.value = err.message || 'Google sign in failed.'
+  } catch (err) {
+    error.value = getErrorMessage(err, 'Google sign in failed.')
   } finally {
     loading.value = false
   }
@@ -31,17 +57,19 @@ const handleLogin = async () => {
 
   try {
     const user = await signIn(email.value, password.value)
+    if (!isAuthUser(user)) throw new Error('Unexpected auth response.')
     await finalizeLogin(user)
-  } catch (err: any) {
-    error.value = err.message || 'Sign in failed. Check your credentials.'
+  } catch (err) {
+    error.value = getErrorMessage(err, 'Sign in failed. Check your credentials.')
   } finally {
     loading.value = false
   }
 }
 
-const finalizeLogin = async (user: any) => {
+const finalizeLogin = async (user: AuthUser) => {
   const tokenResult = await user.getIdTokenResult(true)
-  const role = (tokenResult.claims['role'] as string) ?? 'user'
+  const roleClaim = tokenResult.claims['role']
+  const role = typeof roleClaim === 'string' ? roleClaim : 'user'
 
   const allowedRoles = ['moderator', 'admin', 'superadmin']
   if (!allowedRoles.includes(role)) {
@@ -72,9 +100,9 @@ const finalizeLogin = async (user: any) => {
 
       <div class="flex flex-col gap-4">
         <button
-          @click="handleGoogleLogin"
           :disabled="loading"
           class="w-full flex items-center justify-center gap-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60"
+          @click="handleGoogleLogin"
         >
           <Icon name="logos:google-icon" size="18" />
           Continue with Google

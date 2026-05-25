@@ -13,6 +13,7 @@ const totalUsers = ref(0)
 const pendingModeration = ref(0)
 const pendingReports = ref(0)
 const resourceStats = ref<Stats | null>(null)
+const statsError = ref('')
 
 onMounted(async () => {
   const [users, pending, reports] = await Promise.allSettled([
@@ -27,7 +28,10 @@ onMounted(async () => {
 
   try {
     resourceStats.value = await get<Stats>('/admin/resources/stats')
-  } catch {}
+  } catch (err) {
+    statsError.value = 'Failed to load resource stats.'
+    console.error('Failed to load resource stats', err)
+  }
 
   loading.value = false
 })
@@ -36,6 +40,10 @@ onMounted(async () => {
 <template>
   <div>
     <h1 class="text-xl font-bold text-gray-900 mb-6">Dashboard</h1>
+
+    <div v-if="statsError" class="mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
+      {{ statsError }}
+    </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
       <StatCard label="Total Users" :value="totalUsers" icon="i-heroicons-users" to="/users" :loading="loading" />

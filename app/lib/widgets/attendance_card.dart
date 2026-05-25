@@ -146,7 +146,7 @@ class AttendanceCard extends StatelessWidget {
           BoxShadow(
             offset: const Offset(0, 0),
             blurRadius: 29.1,
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
           ),
         ],
       ),
@@ -214,7 +214,7 @@ class AttendanceCard extends StatelessWidget {
           child: Container(
             width: 22.17,
             height: 416.391,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -226,7 +226,7 @@ class AttendanceCard extends StatelessWidget {
           child: Container(
             width: 42.045,
             height: 416.391,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -238,7 +238,7 @@ class AttendanceCard extends StatelessWidget {
           child: Container(
             width: 60.386,
             height: 416.391,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -250,7 +250,7 @@ class AttendanceCard extends StatelessWidget {
           child: Container(
             width: 43.627,
             height: 153.136,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -262,7 +262,7 @@ class AttendanceCard extends StatelessWidget {
           child: Container(
             width: 17.74,
             height: 416.391,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),

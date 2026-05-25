@@ -5,10 +5,10 @@ export const getPublicCmsContent = async (req: Request, res: Response) => {
   try {
     const db = admin.firestore();
     const snapshot = await db.collection('app_content').get();
-    
+
     // Convert to a simple key-value map for the app to consume easily
     const content: Record<string, any> = {};
-    snapshot.docs.forEach((doc) => {
+    snapshot.docs.forEach(doc => {
       content[doc.id] = doc.data().value;
     });
 

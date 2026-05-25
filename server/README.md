@@ -1,4 +1,25 @@
-# CodeSapiens API
+# CollegeSapien Server (API)
+
+Backend API and Firebase Functions for the CollegeSapien platform.
+
+## Location
+
+This app lives in `server/` with Cloud Functions in `server/functions`.
+
+## Prerequisites
+
+- Node.js 24
+- pnpm 11+
+- Firebase CLI (for local emulators)
+
+## Setup
+
+```bash
+cd server/functions
+pnpm install
+pnpm build
+pnpm serve
+```
 
 ## 1. System Entities & Edge Cases
 

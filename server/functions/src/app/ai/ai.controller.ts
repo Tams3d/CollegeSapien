@@ -26,10 +26,7 @@ export const roastResume = async (req: AuthRequest, res: Response) => {
       const fileMimeType = (mimeType as string) || 'application/pdf';
 
       result = await withRetry(() =>
-        model.generateContent([
-          prompt,
-          { inlineData: { data: base64, mimeType: fileMimeType } },
-        ])
+        model.generateContent([prompt, { inlineData: { data: base64, mimeType: fileMimeType } }])
       );
     } else if (fileBase64) {
       // Handle inline base64 file sent directly from app
@@ -82,7 +79,7 @@ export const processResourceDocument = async (
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-3.1-pro-preview' });
     const expectedCategory = data.category as string;
-    const resourceName = data.name as string ?? '';
+    const resourceName = (data.name as string) ?? '';
 
     const prompt = `You are reviewing an academic resource upload. The uploader tagged it as category: "${expectedCategory}".
 Resource name: "${resourceName}"
@@ -111,10 +108,7 @@ Rules:
       const mimeType = (data.mimeType as string) || 'application/pdf';
 
       const result = await withRetry(() =>
-        model.generateContent([
-          prompt,
-          { inlineData: { data: base64, mimeType } },
-        ])
+        model.generateContent([prompt, { inlineData: { data: base64, mimeType } }])
       );
       analysis = parseAnalysisResponse(result.response.text());
     } else {
@@ -142,7 +136,11 @@ Rules:
     await docRef.update(update);
   } catch (err) {
     console.error(`processResourceDocument failed for ${resourceId}:`, err);
-    await docRef.update({ aiProcessed: true, updatedAt: admin.firestore.FieldValue.serverTimestamp() }).catch(() => {});
+    await docRef
+      .update({ aiProcessed: true, updatedAt: admin.firestore.FieldValue.serverTimestamp() })
+      .catch(updateError => {
+        console.error('Failed to mark AI processing status', updateError);
+      });
   }
 };
 
@@ -158,7 +156,12 @@ function parseAnalysisResponse(text: string): ResourceAnalysis {
       keywords: Array.isArray(parsed.keywords) ? parsed.keywords.slice(0, 10) : [],
     };
   } catch {
-    return { categoryMatchesExpected: true, aiSuggestedCategory: null, isSpam: false, keywords: [] };
+    return {
+      categoryMatchesExpected: true,
+      aiSuggestedCategory: null,
+      isSpam: false,
+      keywords: [],
+    };
   }
 }
 

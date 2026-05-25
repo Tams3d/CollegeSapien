@@ -25,7 +25,9 @@ const resolve = async (report: Report, action: string) => {
     await patch(`/admin/reports/${report.id}/resolve`, { action })
     reports.value = reports.value.filter((r) => r.id !== report.id)
     snack.value = `Report resolved: ${action.replace('_', ' ')}.`
-  } catch {}
+  } catch (err) {
+    console.error('Failed to resolve report', err)
+  }
   actionInFlight.value.delete(report.id)
   confirmAction.value = null
 }

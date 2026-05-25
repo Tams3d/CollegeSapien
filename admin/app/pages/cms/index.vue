@@ -18,6 +18,7 @@ onMounted(async () => {
     entries.value = await get<CmsEntry[]>('/admin/cms')
     entries.value.forEach((e) => { editing.value[e.key] = e.value })
   } catch (e: unknown) {
+    console.error('Failed to load CMS entries', e)
     error.value = 'CMS endpoint not yet available — add GET /admin/cms to the API.'
   }
   loading.value = false
@@ -29,7 +30,9 @@ const save = async (entry: CmsEntry) => {
     await put(`/admin/cms/${entry.key}`, { value: editing.value[entry.key] })
     entry.value = editing.value[entry.key] ?? entry.value
     snack.value = `${entry.label} updated.`
-  } catch {}
+  } catch (err) {
+    console.error('Failed to update CMS entry', err)
+  }
   saving.value.delete(entry.key)
 }
 </script>
@@ -91,7 +94,7 @@ const save = async (entry: CmsEntry) => {
           />
         </template>
 
-        <div class="flex justify-end mt-3" v-if="authStore.isSuperAdmin">
+        <div v-if="authStore.isSuperAdmin" class="flex justify-end mt-3">
           <button
             :disabled="saving.has(entry.key)"
             class="px-4 py-1.5 text-sm bg-yellow-400 text-gray-900 font-medium rounded-lg hover:bg-yellow-500 disabled:opacity-60 transition-colors"

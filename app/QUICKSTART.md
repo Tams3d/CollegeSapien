@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get the Codesapiens app running in 5 minutes!
+Get the CollegeSapien app running in 5 minutes!
 
 ## Prerequisites
 
@@ -10,6 +10,12 @@ flutter doctor
 ```
 
 ## Setup Steps
+
+### 0. Navigate to the app directory
+
+```bash
+cd app
+```
 
 ### 1. Download Fonts (Automated)
 

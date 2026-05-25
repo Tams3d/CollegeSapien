@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/api_models.dart';
 import '../../services/attendance_service.dart';
-import '../../services/app_capability_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
@@ -355,7 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const Icon(Icons.calculate_outlined, size: 26, color: Colors.black),
               const SizedBox(height: 6),
               Text(
-                emptyHint ?? '',
+                emptyHint,
                 style: const TextStyle(
                   fontFamily: 'Public Sans',
                   fontSize: 11,

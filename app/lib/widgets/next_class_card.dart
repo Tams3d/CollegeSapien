@@ -144,7 +144,7 @@ class NextClassCard extends StatelessWidget {
           child: Container(
             width: 22.17,
             height: 416.391,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -156,7 +156,7 @@ class NextClassCard extends StatelessWidget {
           child: Container(
             width: 42.045,
             height: 416.391,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -168,7 +168,7 @@ class NextClassCard extends StatelessWidget {
           child: Container(
             width: 60.386,
             height: 416.391,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -180,7 +180,7 @@ class NextClassCard extends StatelessWidget {
           child: Container(
             width: 43.627,
             height: 153.136,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),
@@ -192,7 +192,7 @@ class NextClassCard extends StatelessWidget {
           child: Container(
             width: 17.74,
             height: 416.391,
-            color: const Color(0xFFFCD150).withOpacity(0.52),
+            color: const Color(0xFFFCD150).withValues(alpha: 0.52),
           ),
         ),
       ),

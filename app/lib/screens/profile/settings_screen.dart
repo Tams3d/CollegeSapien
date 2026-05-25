@@ -258,7 +258,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(
                         fontFamily: 'Public Sans',
                         fontSize: 14,
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -360,8 +360,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.primaryYellow,
-            activeTrackColor: AppColors.primaryYellow.withOpacity(0.5),
+            activeThumbColor: AppColors.primaryYellow,
+            activeTrackColor: AppColors.primaryYellow.withValues(alpha: 0.5),
           ),
         ],
       ),

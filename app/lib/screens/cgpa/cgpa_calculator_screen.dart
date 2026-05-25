@@ -72,6 +72,7 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
         setState(() => _isScanning = false);
       }
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -360,15 +361,15 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
             if (_isScanning)
               Container(
                 color: Colors.black54,
-                child: const Center(
+                child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryYellow),
                       ),
-                      SizedBox(height: 16),
-                      Text(
+                      const SizedBox(height: 16),
+                      const Text(
                         'Analyzing grade sheet...\nGemini AI is working...',
                         style: TextStyle(
                           fontFamily: 'Public Sans',
@@ -415,7 +416,7 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
                   style: TextStyle(
                     fontFamily: 'Public Sans',
                     fontSize: 12,
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                   ),
                 ),
               ],

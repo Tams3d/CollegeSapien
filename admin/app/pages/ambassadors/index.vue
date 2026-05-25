@@ -49,7 +49,9 @@ const promote = async () => {
     }
     snack.value = `${selectedUser.value.name} promoted to ambassador.`
     showPromoteModal.value = false
-  } catch {}
+  } catch (err) {
+    console.error('Failed to promote ambassador', err)
+  }
   actionLoading.value = false
 }
 
@@ -59,7 +61,9 @@ const revoke = async (user: User) => {
     const idx = users.value.findIndex((u) => u.id === user.id)
     if (idx !== -1) users.value[idx]!.role = 'user'
     snack.value = `${user.name} revoked from Ambassador role.`
-  } catch {}
+  } catch (err) {
+    console.error('Failed to revoke ambassador', err)
+  }
 }
 </script>
 

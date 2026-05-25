@@ -109,7 +109,7 @@ class HelpScreen extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: 'Public Sans',
                           fontSize: 14,
-                          color: Colors.black.withOpacity(0.7),
+                          color: Colors.black.withValues(alpha: 0.7),
                           height: 1.5,
                         ),
                       ),

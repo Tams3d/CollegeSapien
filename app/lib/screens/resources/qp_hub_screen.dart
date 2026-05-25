@@ -370,7 +370,7 @@ class _QpHubScreenState extends State<QpHubScreen> {
                       if (departments.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String?>(
-                          value: _selectedDepartment,
+                          initialValue: _selectedDepartment,
                           decoration: InputDecoration(
                             labelText: 'Department',
                             border: OutlineInputBorder(
@@ -400,7 +400,7 @@ class _QpHubScreenState extends State<QpHubScreen> {
                       if (regulations.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String?>(
-                          value: _selectedRegulation,
+                          initialValue: _selectedRegulation,
                           decoration: InputDecoration(
                             labelText: 'Regulation',
                             border: OutlineInputBorder(
@@ -573,7 +573,7 @@ class _QpHubScreenState extends State<QpHubScreen> {
                       fontWeight: FontWeight.w600)),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: selectedType,
+                initialValue: selectedType,
                 decoration: InputDecoration(
                   labelText: 'Reason type',
                   border: OutlineInputBorder(

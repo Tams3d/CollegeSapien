@@ -104,7 +104,7 @@ const saveCollege = async () => {
     }
     formMode.value = "idle";
     selectedCollege.value = null;
-  } catch (e: unknown) {
+  } catch {
     formError.value = "Save failed. Check that you have superadmin access.";
   }
   formSaving.value = false;

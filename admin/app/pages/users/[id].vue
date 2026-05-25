@@ -47,7 +47,9 @@ const assignRole = async () => {
     user.value.role = selectedRole.value
     snack.value = 'Role updated.'
     showRoleModal.value = false
-  } catch {}
+  } catch (err) {
+    console.error('Failed to assign role', err)
+  }
   actionLoading.value = false
 }
 
@@ -62,7 +64,9 @@ const toggleBan = async () => {
     user.value.disabled = !user.value.disabled
     snack.value = user.value.disabled ? 'User banned.' : 'User unbanned.'
     showBanModal.value = false
-  } catch {}
+  } catch (err) {
+    console.error('Failed to toggle ban state', err)
+  }
   actionLoading.value = false
 }
 </script>

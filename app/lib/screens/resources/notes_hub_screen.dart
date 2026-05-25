@@ -340,7 +340,7 @@ class _NotesHubScreenState extends State<NotesHubScreen> {
                       if (subjects.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String?>(
-                          value: _selectedSubjectId,
+                          initialValue: _selectedSubjectId,
                           decoration: InputDecoration(
                             labelText: 'Subject',
                             border: OutlineInputBorder(
@@ -544,7 +544,7 @@ class _NotesHubScreenState extends State<NotesHubScreen> {
                       fontWeight: FontWeight.w600)),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: selectedType,
+                initialValue: selectedType,
                 decoration: InputDecoration(
                   labelText: 'Reason type',
                   border: OutlineInputBorder(

@@ -222,7 +222,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           DropdownButtonFormField<String>(
-                            value: selectedDay,
+                            initialValue: selectedDay,
                             decoration: const InputDecoration(labelText: 'Day'),
                             items: days
                                 .map((d) => DropdownMenuItem(value: d, child: Text(d)))
@@ -249,7 +249,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            value: selectedType,
+                            initialValue: selectedType,
                             decoration: const InputDecoration(labelText: 'Type'),
                             items: types
                                 .map((t) => DropdownMenuItem(value: t, child: Text(t)))
@@ -703,7 +703,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
-                          color: Colors.black.withOpacity(0.8),
+                          color: Colors.black.withValues(alpha: 0.8),
                           height: 1.3,
                         ),
                       ),
@@ -758,7 +758,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
           Icon(
             Icons.calendar_month,
             size: 80,
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
@@ -767,7 +767,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
               fontFamily: 'Public Sans',
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.black.withOpacity(0.6),
+              color: Colors.black.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 8),
@@ -776,7 +776,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
             style: TextStyle(
               fontFamily: 'Public Sans',
               fontSize: 14,
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
             ),
           ),
         ],

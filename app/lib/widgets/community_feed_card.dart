@@ -119,7 +119,7 @@ class CommunityFeedCard extends StatelessWidget {
                             text: 'Shared By ',
                             style: TextStyle(
                               fontWeight: FontWeight.w300,
-                              color: Colors.black.withOpacity(0.6),
+                              color: Colors.black.withValues(alpha: 0.6),
                             ),
                           ),
                           TextSpan(

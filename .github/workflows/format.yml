@@ -1,0 +1,22 @@
+name: Format Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  markdown-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check markdown formatting
+        run: >
+          npx prettier@3.5.3 --check
+          README.md
+          CONTRIBUTING.md
+          CODE_OF_CONDUCT.md
+          SECURITY.md
+          admin/README.md
+          server/README.md
+          app/README.md
+          app/QUICKSTART.md

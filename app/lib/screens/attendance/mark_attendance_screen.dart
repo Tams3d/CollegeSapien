@@ -158,7 +158,7 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
+            colorScheme: ColorScheme.light(
               primary: AppColors.primaryYellow,
               onPrimary: Colors.black,
               surface: Colors.white,

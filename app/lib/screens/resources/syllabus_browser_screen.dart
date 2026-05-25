@@ -277,7 +277,7 @@ class _SyllabusBrowserScreenState extends State<SyllabusBrowserScreen> {
                       if (departments.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String?>(
-                          value: _selectedDepartment,
+                          initialValue: _selectedDepartment,
                           decoration: InputDecoration(
                             labelText: 'Department',
                             border: OutlineInputBorder(
@@ -307,7 +307,7 @@ class _SyllabusBrowserScreenState extends State<SyllabusBrowserScreen> {
                       if (regulations.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String?>(
-                          value: _selectedRegulation,
+                          initialValue: _selectedRegulation,
                           decoration: InputDecoration(
                             labelText: 'Regulation',
                             border: OutlineInputBorder(

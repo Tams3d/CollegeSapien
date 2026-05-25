@@ -413,9 +413,9 @@ class _SignupScreenState extends State<SignupScreen> {
             BoxShadow(offset: Offset(3, 3), color: Colors.black)
           ],
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.g_mobiledata, size: 28, color: Colors.black),
             SizedBox(width: 8),
             Text(

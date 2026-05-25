@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
-  static const _cardColors = [
+  static final List<Color> _cardColors = [
     AppColors.accentGreen,
     AppColors.accentPink,
     AppColors.accentPurple,
@@ -866,7 +866,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.rotationZ(48 * math.pi / 180)
-                      ..scale(1.0, -1.0),
+                      ..scaleByDouble(1.0, -1.0, 1.0, 1.0),
                     child: Image.asset(
                       'assets/images/halftone.png',
                       fit: BoxFit.cover,
@@ -1109,12 +1109,11 @@ class _HomeScreenState extends State<HomeScreen> {
               BoxShadow(offset: Offset(4, 4), color: Colors.black)
             ],
           ),
-          child: Row(
+          child: const Row(
             children: [
-              const Icon(Icons.local_fire_department,
-                  size: 36, color: Colors.black),
-              const SizedBox(width: 16),
-              const Expanded(
+              Icon(Icons.local_fire_department, size: 36, color: Colors.black),
+              SizedBox(width: 16),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1140,8 +1139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios,
-                  size: 18, color: Colors.black),
+              Icon(Icons.arrow_forward_ios, size: 18, color: Colors.black),
             ],
           ),
         ),

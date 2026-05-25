@@ -270,7 +270,7 @@ class _ResumeRoastScreenState extends State<ResumeRoastScreen> {
                 style: TextStyle(
                   fontFamily: 'Public Sans',
                   fontSize: 16,
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -334,7 +334,7 @@ class _ResumeRoastScreenState extends State<ResumeRoastScreen> {
                     elevation: 0,
                     shadowColor: Colors.black,
                   ).copyWith(
-                    shadowColor: MaterialStateProperty.all(Colors.black),
+                    shadowColor: WidgetStateProperty.all(Colors.black),
                   ),
                   child: _isUploading
                       ? const SizedBox(

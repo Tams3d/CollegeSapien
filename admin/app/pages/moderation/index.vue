@@ -32,7 +32,9 @@ const approve = async (id: string) => {
     await patch(`/admin/resources/${id}/approve`)
     resources.value = resources.value.filter((r) => r.id !== id)
     snack.value = 'Resource approved.'
-  } catch {}
+  } catch (err) {
+    console.error('Failed to approve resource', err)
+  }
   actionInFlight.value.delete(id)
 }
 
@@ -44,7 +46,9 @@ const reject = async () => {
     await patch(`/admin/resources/${id}/reject`, rejectReason.value ? { reason: rejectReason.value } : {})
     resources.value = resources.value.filter((r) => r.id !== id)
     snack.value = 'Resource rejected and archived.'
-  } catch {}
+  } catch (err) {
+    console.error('Failed to reject resource', err)
+  }
   pendingReject.value = null
   rejectReason.value = ''
   actionInFlight.value.delete(id)
@@ -56,7 +60,9 @@ const archive = async (id: string) => {
     await apiDelete(`/admin/resources/${id}`)
     resources.value = resources.value.filter((r) => r.id !== id)
     snack.value = 'Resource archived.'
-  } catch {}
+  } catch (err) {
+    console.error('Failed to archive resource', err)
+  }
   actionInFlight.value.delete(id)
 }
 </script>

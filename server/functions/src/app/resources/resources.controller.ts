@@ -21,7 +21,10 @@ export const getSyllabus = async (req: AuthRequest, res: Response) => {
     const uid = req.user?.uid;
     if (!uid) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { department, semester, regulation, query } = (req.query ?? {}) as Record<string, string | undefined>;
+    const { department, semester, regulation, query } = (req.query ?? {}) as Record<
+      string,
+      string | undefined
+    >;
     const profile = await getUserProfile(uid);
     let ref: admin.firestore.Query = firestore()
       .collection('hub_resources')

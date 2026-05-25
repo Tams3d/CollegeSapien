@@ -55,9 +55,7 @@ class ResourceService {
     if (subjectCode != null) params['subjectId'] = subjectCode;
 
     final query = params.isNotEmpty
-        ? '?' + params.entries
-            .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-            .join('&')
+        ? '?${params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&')}'
         : '';
     final json =
         await ApiService.instance.get('/resources/syllabus$query') as List<dynamic>;

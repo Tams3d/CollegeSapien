@@ -1,6 +1,10 @@
-# Codesapiens - University Attendance & Timetable App
+# CollegeSapien Mobile App
 
 A Flutter mobile application for managing university attendance, timetables, and academic resources. Designed with a vibrant, modern UI that matches the exact Figma design specifications.
+
+## Location
+
+This app lives in `app/` at the root of the CollegeSapien monorepo.
 
 ## Features
 
@@ -59,9 +63,9 @@ You can download these fonts from:
 
 ### Installation
 
-1. **Clone or navigate to the project directory:**
+1. **Navigate to the project directory:**
    ```bash
-   cd "Codesapiens app"
+   cd app
    ```
 
 2. **Create the fonts directory and add font files:**
@@ -152,4 +156,4 @@ The app includes the following screens/sections:
 
 ## License
 
-This project is for educational purposes as part of the LGS Codesapiens initiative.
+Licensed under the [MIT License](../LICENSE).

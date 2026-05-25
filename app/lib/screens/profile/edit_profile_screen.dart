@@ -171,8 +171,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) return null;
                           final n = int.tryParse(v.trim());
-                          if (n == null || n < 1 || n > 10)
+                          if (n == null || n < 1 || n > 10) {
                             return 'Enter a semester between 1 and 10';
+                          }
                           return null;
                         },
                       ),

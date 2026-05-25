@@ -102,9 +102,9 @@ class _MainNavigationState extends State<MainNavigation>
 
   Widget _bottomNav() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primaryYellow,
-        border: Border(top: BorderSide(color: Colors.black, width: 1.5)),
+        border: const Border(top: BorderSide(color: Colors.black, width: 1.5)),
       ),
       child: SafeArea(
         top: false,

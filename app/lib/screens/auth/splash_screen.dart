@@ -143,20 +143,18 @@ class _SplashScreenState extends State<SplashScreen>
                       fontFamily: 'Public Sans',
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black.withOpacity(0.7),
+                      color: Colors.black.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 60),
 
                   // Loading indicator
-                  SizedBox(
+                  const SizedBox(
                     width: 40,
                     height: 40,
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.black,
-                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
                     ),
                   ),
                 ],

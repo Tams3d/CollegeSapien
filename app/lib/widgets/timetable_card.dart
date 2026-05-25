@@ -32,7 +32,7 @@ class TimetableCard extends StatelessWidget {
           BoxShadow(
             offset: const Offset(0, 8),
             blurRadius: 24,
-            color: const Color(0xFF003FB1).withOpacity(0.12),
+            color: const Color(0xFF003FB1).withValues(alpha: 0.12),
           ),
         ],
       ),

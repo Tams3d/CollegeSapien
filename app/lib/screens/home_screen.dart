@@ -143,8 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 20),
 
                     // Resource Buttons
-                    Column(
-                      children: const [
+                    const Column(
+                      children: [
                         ResourceButton(
                           icon: Icons.book,
                           title: 'Previous Year Papers',
@@ -298,8 +298,8 @@ class _HomeScreenState extends State<HomeScreen> {
             BoxShadow(offset: Offset(4, 4), color: Colors.black),
           ],
         ),
-        child: Row(
-          children: const [
+        child: const Row(
+          children: [
             Icon(Icons.local_fire_department, size: 36, color: Colors.black),
             SizedBox(width: 16),
             Expanded(
@@ -348,11 +348,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildNavItem(0, 'Home', Icons.home, true),
-            _buildNavItem(1, null, Icons.bar_chart, false),
-            _buildNavItem(2, null, Icons.bookmark, false),
-            _buildNavItem(3, null, Icons.people, false),
-            _buildNavItem(4, null, Icons.person, false),
+            _buildNavItem(0, 'Home', Icons.home, _selectedIndex == 0),
+            _buildNavItem(1, null, Icons.bar_chart, _selectedIndex == 1),
+            _buildNavItem(2, null, Icons.bookmark, _selectedIndex == 2),
+            _buildNavItem(3, null, Icons.people, _selectedIndex == 3),
+            _buildNavItem(4, null, Icons.person, _selectedIndex == 4),
           ],
         ),
       ),

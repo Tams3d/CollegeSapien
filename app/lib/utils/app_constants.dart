@@ -19,7 +19,7 @@ class AppConstants {
 
   // API
   static String get apiBaseUrl {
-    final baseUrl = const String.fromEnvironment(
+    const baseUrl = String.fromEnvironment(
       'CODESAPIENS_API_BASE_URL',
       defaultValue:
           'http://127.0.0.1:5001/codesapien-college/asia-south1/api/api/v1',

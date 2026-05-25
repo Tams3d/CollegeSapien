@@ -11,11 +11,12 @@ class SeasonalContentScreen extends StatelessWidget {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image == null) return;
+    if (!context.mounted) return;
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (context) => Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryYellow),
         ),
@@ -24,46 +25,45 @@ class SeasonalContentScreen extends StatelessWidget {
 
     await Future.delayed(const Duration(seconds: 2));
 
-    if (context.mounted) {
-      Navigator.pop(context);
+    if (!context.mounted) return;
+    Navigator.pop(context);
 
-      String result = feature == 'roast'
-          ? "Dei! Engineering graduate ah? Skills list romba long iruku, but project section empty! 'Team player' nu solra, aana GitHub la solo projects mattum than! LinkedIn ku than indha resume upload panra pola!"
-          : "Machaan! Resume vida meme content better ah iruku!";
+    String result = feature == 'roast'
+        ? "Dei! Engineering graduate ah? Skills list romba long iruku, but project section empty! 'Team player' nu solra, aana GitHub la solo projects mattum than! LinkedIn ku than indha resume upload panra pola!"
+        : "Machaan! Resume vida meme content better ah iruku!";
 
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: AppColors.accentPurple,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(color: Colors.black, width: 2),
-          ),
-          title: Text(
-            feature == 'roast' ? 'Resume Roast' : 'Result',
-            style: const TextStyle(
-              fontFamily: 'Lexend Mega',
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          content: Text(
-            result,
-            style: const TextStyle(
-              fontFamily: 'Public Sans',
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close', style: TextStyle(color: Colors.black)),
-            ),
-          ],
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.accentPurple,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Colors.black, width: 2),
         ),
-      );
-    }
+        title: Text(
+          feature == 'roast' ? 'Resume Roast' : 'Result',
+          style: const TextStyle(
+            fontFamily: 'Lexend Mega',
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          result,
+          style: const TextStyle(
+            fontFamily: 'Public Sans',
+            fontSize: 16,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -99,7 +99,7 @@ class SeasonalContentScreen extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'Public Sans',
                   fontSize: 14,
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 30),
@@ -153,7 +153,7 @@ class SeasonalContentScreen extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: 'Public Sans',
                           fontSize: 14,
-                          color: Colors.black.withOpacity(0.8),
+                          color: Colors.black.withValues(alpha: 0.8),
                           height: 1.5,
                         ),
                       ),
@@ -204,7 +204,7 @@ class SeasonalContentScreen extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Public Sans',
                       fontSize: 13,
-                      color: Colors.black.withOpacity(0.7),
+                      color: Colors.black.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

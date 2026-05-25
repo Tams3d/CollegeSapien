@@ -30,7 +30,7 @@ export const processHubResource = onDocumentCreated(
     timeoutSeconds: 120,
     maxInstances: 5,
   },
-  async (event) => {
+  async event => {
     const data = event.data?.data() as Record<string, any> | undefined;
     if (!data) return;
     if (data.aiProcessed) return;

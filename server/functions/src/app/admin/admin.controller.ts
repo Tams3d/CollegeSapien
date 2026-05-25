@@ -156,7 +156,10 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
     const { id } = req.params as { id: string };
     const [docSnap, authUser] = await Promise.all([
       firestore().collection('users').doc(id).get(),
-      admin.auth().getUser(id).catch(() => null),
+      admin
+        .auth()
+        .getUser(id)
+        .catch(() => null),
     ]);
     if (!docSnap.exists) return res.status(404).json({ error: 'User not found' });
     return res.status(200).json({
@@ -235,24 +238,28 @@ export const getResourceStats = async (_req: AuthRequest, res: Response) => {
   try {
     const db = firestore();
     const [approvedNotes, approvedQPs, pending, syllabus] = await Promise.all([
-      db.collection('hub_resources')
+      db
+        .collection('hub_resources')
         .where('status', '==', 'approved')
         .where('category', '==', 'Notes')
         .where('deletedAt', '==', null)
         .count()
         .get(),
-      db.collection('hub_resources')
+      db
+        .collection('hub_resources')
         .where('status', '==', 'approved')
         .where('category', '==', 'QP')
         .where('deletedAt', '==', null)
         .count()
         .get(),
-      db.collection('hub_resources')
+      db
+        .collection('hub_resources')
         .where('status', '==', 'pending_moderation')
         .where('deletedAt', '==', null)
         .count()
         .get(),
-      db.collection('hub_resources')
+      db
+        .collection('hub_resources')
         .where('category', '==', 'Syllabus')
         .where('deletedAt', '==', null)
         .count()
@@ -272,7 +279,7 @@ export const getResourceStats = async (_req: AuthRequest, res: Response) => {
 export const getCmsContent = async (_req: AuthRequest, res: Response) => {
   try {
     const snapshot = await firestore().collection('app_content').orderBy('label').get();
-    const entries = snapshot.docs.map((doc) => ({ key: doc.id, ...doc.data() }));
+    const entries = snapshot.docs.map(doc => ({ key: doc.id, ...doc.data() }));
     return res.status(200).json(entries);
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -286,10 +293,13 @@ export const updateCmsContent = async (req: AuthRequest, res: Response) => {
     const uid = req.user?.uid;
     const { key } = req.params as { key: string };
     const { value } = UpdateCmsSchema.parse(req.body);
-    await firestore().collection('app_content').doc(key).set(
-      { value, updatedBy: uid, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
-      { merge: true }
-    );
+    await firestore()
+      .collection('app_content')
+      .doc(key)
+      .set(
+        { value, updatedBy: uid, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
+        { merge: true }
+      );
     return res.status(200).json({ message: 'CMS entry updated' });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

@@ -212,9 +212,27 @@ router.patch(
  *                   example: "Resource rejected and archived"
  */
 router.get('/resources/stats', authenticate, requireVerifiedEmail, isSuperAdmin, getResourceStats);
-router.get('/resources/approved', authenticate, requireVerifiedEmail, isModerator, listApprovedResources);
-router.get('/resources/archived', authenticate, requireVerifiedEmail, isModerator, listArchivedResources);
-router.patch('/resources/:id/unarchive', authenticate, requireVerifiedEmail, isModerator, unarchiveResource);
+router.get(
+  '/resources/approved',
+  authenticate,
+  requireVerifiedEmail,
+  isModerator,
+  listApprovedResources
+);
+router.get(
+  '/resources/archived',
+  authenticate,
+  requireVerifiedEmail,
+  isModerator,
+  listArchivedResources
+);
+router.patch(
+  '/resources/:id/unarchive',
+  authenticate,
+  requireVerifiedEmail,
+  isModerator,
+  unarchiveResource
+);
 router.delete('/resources/:id', authenticate, requireVerifiedEmail, isModerator, deleteResource);
 
 /**

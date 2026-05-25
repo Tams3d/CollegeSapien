@@ -22,7 +22,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
   String? _selectedDepartment;
   int? _selectedSemester;
   bool _isLoading = false;
-  bool _isButtonPressed = false;
   late AnimationController _animationController;
 
   final List<String> _departments = [
@@ -160,7 +159,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                           width: 60 + (index % 3) * 20,
                           height: 60 + (index % 3) * 20,
                           decoration: BoxDecoration(
-                            color: colors[index % colors.length].withOpacity(0.7),
+                            color: colors[index % colors.length].withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.black, width: 2),
                           ),
@@ -198,7 +197,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                   style: TextStyle(
                     fontFamily: 'Public Sans',
                     fontSize: 14,
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -221,7 +220,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
 
                 // College Dropdown
                 DropdownButtonFormField<String>(
-                  value: _selectedCollegeId,
+                  initialValue: _selectedCollegeId,
                   decoration: const InputDecoration(
                     labelText: 'College',
                     prefixIcon: Icon(Icons.school_outlined),
@@ -246,7 +245,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
 
                 // Department Dropdown
                 DropdownButtonFormField<String>(
-                  value: _selectedDepartment,
+                  initialValue: _selectedDepartment,
                   decoration: const InputDecoration(
                     labelText: 'Department',
                     prefixIcon: Icon(Icons.engineering_outlined),
@@ -267,7 +266,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
 
                 // Semester Dropdown
                 DropdownButtonFormField<int>(
-                  value: _selectedSemester,
+                  initialValue: _selectedSemester,
                   decoration: const InputDecoration(
                     labelText: 'Current Semester',
                     prefixIcon: Icon(Icons.calendar_month_outlined),
@@ -287,50 +286,39 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                 const SizedBox(height: 40),
 
                 // Submit Button
-                GestureDetector(
-                  onTapDown: (_) {
-                    setState(() => _isButtonPressed = true);
-                  },
-                  onTapUp: (_) {
-                    setState(() => _isButtonPressed = false);
-                  },
-                  onTapCancel: () {
-                    setState(() => _isButtonPressed = false);
-                  },
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleSubmit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryYellow,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: const BorderSide(color: Colors.black, width: 2),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.black,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                            'Continue',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
+                SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _handleSubmit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryYellow,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.black, width: 2),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.black,
                             ),
                           ),
-                  ),
+                        )
+                      : const Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
                 ),
                 ),
               ],

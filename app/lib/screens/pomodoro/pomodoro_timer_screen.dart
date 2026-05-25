@@ -263,7 +263,7 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
                         hintText: 'Add a task...',
                         hintStyle: TextStyle(
                           fontFamily: 'Public Sans',
-                          color: Colors.black.withOpacity(0.4),
+                          color: Colors.black.withValues(alpha: 0.4),
                         ),
                         filled: true,
                         fillColor: Colors.white,
@@ -309,7 +309,7 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
                       style: TextStyle(
                         fontFamily: 'Public Sans',
                         fontSize: 14,
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -333,7 +333,7 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: AppTheme.cardDecoration(
-        color: isDone ? AppColors.accentGreen.withOpacity(0.6) : Colors.white,
+        color: isDone ? AppColors.accentGreen.withValues(alpha: 0.6) : Colors.white,
         shadowOffset: const Offset(2, 2),
       ),
       child: Row(
@@ -370,7 +370,7 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
           ),
           GestureDetector(
             onTap: () => _deleteTask(index),
-            child: Icon(Icons.close, size: 18, color: Colors.black.withOpacity(0.5)),
+            child: Icon(Icons.close, size: 18, color: Colors.black.withValues(alpha: 0.5)),
           ),
         ],
       ),
@@ -386,7 +386,7 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _getModeColor() : Colors.white.withOpacity(0.5),
+          color: isSelected ? _getModeColor() : Colors.white.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.black, width: isSelected ? 2 : 1),
           boxShadow: isSelected

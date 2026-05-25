@@ -40,7 +40,8 @@ const fetchResources = async () => {
     const query =
       categoryFilter.value !== "all" ? `?category=${categoryFilter.value}` : "";
     resourceList.value = await get<Resource[]>(`${endpoint}${query}`);
-  } catch {
+  } catch (err) {
+    console.error('Failed to load resources', err)
     resourceList.value = [];
   }
   resourcesLoading.value = false;
@@ -52,7 +53,9 @@ const archive = async (id: string) => {
     await apiDelete(`/admin/resources/${id}`);
     resourceList.value = resourceList.value.filter((r) => r.id !== id);
     snack.value = "Resource archived.";
-  } catch {}
+  } catch (err) {
+    console.error('Failed to archive resource', err)
+  }
   actionInFlight.value.delete(id);
 };
 
@@ -62,14 +65,17 @@ const unarchive = async (id: string) => {
     await patch(`/admin/resources/${id}/unarchive`);
     resourceList.value = resourceList.value.filter((r) => r.id !== id);
     snack.value = "Resource restored to approved.";
-  } catch {}
+  } catch (err) {
+    console.error('Failed to unarchive resource', err)
+  }
   actionInFlight.value.delete(id);
 };
 
 onMounted(async () => {
   try {
     stats.value = await get<Stats>("/admin/resources/stats");
-  } catch (e: unknown) {
+  } catch (err) {
+    console.error('Failed to load resource stats', err)
     statsError.value = "Failed to load stats.";
   }
   statsLoading.value = false;
