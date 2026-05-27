@@ -1,6 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { initializeAppCheck, CustomProvider } from "firebase/app-check";
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig();
@@ -14,23 +13,6 @@ export default defineNuxtPlugin(() => {
 
   const app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
   const auth = getAuth(app);
-
-  // App Check: use debug token for the admin panel (internal tool).
-  // Register the debug UUID in Firebase Console → App Check → Debug Tokens.
-  const debugToken = config.public.appCheckDebugToken as string;
-  if (debugToken) {
-    // @ts-expect-error: FIREBASE_APPCHECK_DEBUG_TOKEN is a special global the SDK reads
-    self.FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
-    initializeAppCheck(app, {
-      provider: new CustomProvider({
-        getToken: async () => ({
-          token: debugToken,
-          expireTimeMillis: Date.now() + 3600 * 1000,
-        }),
-      }),
-      isTokenAutoRefreshEnabled: false,
-    });
-  }
 
   // Start auth listener immediately after Firebase is ready
   const authStore = useAuthStore();

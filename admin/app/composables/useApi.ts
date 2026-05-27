@@ -15,9 +15,6 @@ export const useApi = () => {
     };
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const debugToken = config.public.appCheckDebugToken as string;
-    if (debugToken) headers["X-Firebase-AppCheck"] = debugToken;
-
     try {
       return await $fetch<T>(`${config.public.apiBaseUrl}${path}`, {
         method,

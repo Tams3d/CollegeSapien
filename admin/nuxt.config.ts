@@ -21,7 +21,6 @@ export default defineNuxtConfig({
       firebaseAuthDomain: "",
       firebaseProjectId: "",
       firebaseAppId: "",
-      appCheckDebugToken: "",
     },
   },
 });
