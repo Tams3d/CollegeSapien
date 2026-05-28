@@ -2,8 +2,8 @@ import { Response } from 'express';
 import { AuthRequest } from '../../shared/middlewares/auth.middleware';
 import { OnboardingSchema, ProfileUpdateSchema } from './auth.model';
 import * as admin from 'firebase-admin';
-import { sendLoginLinkEmail } from '../../ses/ses.service';
 import { zodError } from '../../shared/zod-error';
+import { sendLoginLinkEmail } from '../../ses/ses.service';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -164,54 +164,26 @@ export const onboard = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/**
- * Handles initial signup.
- * Requires Firebase Auth ID token (Bearer).
- * If domain is whitelisted, creates profile. If email is unverified (Email/Pwd auth), sends an email login link via SES.
- * @param {AuthRequest} req
- * @param {Response} res
- */
 export const signup = async (req: AuthRequest, res: Response) => {
   try {
     const uid = req.user?.uid;
     const email = req.user?.email;
-    const emailVerified = req.user?.email_verified || false;
 
     if (!uid || !email) {
       return res.status(401).json({ error: 'Unauthorized: Invalid token payload' });
     }
 
-    const { name, collegeName, collegeId, department, semester, attendanceThreshold } = req.body;
-
-    if (!name || (!collegeName && !collegeId)) {
-      return res.status(400).json({ error: 'Name and collegeId/collegeName are required' });
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
     }
 
-    const college = await findCollege({ collegeId, collegeName });
-    if (!college) {
-      // Optional: Delete the Firebase user since they can't join
-      // await admin.auth().deleteUser(uid);
-      return res.status(400).json({ error: 'College not found in our directory' });
-    }
-
-    try {
-      assertCollegeAllowed(college, email);
-    } catch (error: any) {
-      return res.status(403).json({ error: error.message });
-    }
-
-    // 2. Store profile in Firestore
     const profileData = {
       uid,
       email,
       name,
-      collegeName: college.data.name,
-      collegeId: college.id,
-      department: department || '',
-      semester: semester || 1,
       role: 'user',
-      isVerified: emailVerified,
-      attendanceThreshold: attendanceThreshold || 75,
+      isVerified: false,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       lastLogin: admin.firestore.FieldValue.serverTimestamp(),
@@ -220,36 +192,16 @@ export const signup = async (req: AuthRequest, res: Response) => {
 
     await firestore().collection('users').doc(uid).set(profileData, { merge: true });
 
-    // 3. Generate & Send Email Login Link if not verified
-    if (!emailVerified) {
-      const actionCodeSettings = {
-        url: process.env.APP_URL || 'https://codesapiens.in/verify',
-        handleCodeInApp: true,
-        android: {
-          packageName: 'in.codesapiens.app',
-          installApp: true,
-          minimumVersion: '12',
-        },
-        iOS: {
-          bundleId: 'in.codesapiens.app',
-        },
-        dynamicLinkDomain: process.env.DYNAMIC_LINK_DOMAIN || 'codesapiens.page.link',
-      };
+    const actionCodeSettings = {
+      url: process.env.APP_URL || 'https://codesapiens.in/verify',
+      handleCodeInApp: false,
+    };
 
-      const link = await admin.auth().generateSignInWithEmailLink(email, actionCodeSettings);
-      await sendLoginLinkEmail(email, link);
-
-      return res.status(201).json({
-        message: 'Signup initiated. Verification link sent to email via SES.',
-        user: profileData,
-      });
-    }
-
-    // If already verified (e.g. Google Auth)
-    setSessionCookie(req, res);
+    const link = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
+    await sendLoginLinkEmail(email, link);
 
     return res.status(201).json({
-      message: 'Signup successful and verified via Google OAuth.',
+      message: 'Signup initiated. Verification link sent to email.',
       user: profileData,
     });
   } catch (error: any) {

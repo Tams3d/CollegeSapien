@@ -40,8 +40,8 @@ export const sendOtpEmail = async (toEmail: string, otp: string, type: 'signup' 
 };
 
 export const sendLoginLinkEmail = async (toEmail: string, link: string) => {
-  const subject = 'Your CodeSapiens Login Link';
-  const body = `Click here to sign in to your CodeSapiens account: ${link}\n\nThis link will expire in 1 hour.`;
+  const subject = 'Verify your CodeSapiens Account';
+  const body = `Click here to verify your email and sign in to your CodeSapiens account: ${link}\n\nThis link will expire in 1 hour.`;
 
   const command = new SendEmailCommand({
     Source: process.env.SES_SENDER_EMAIL || 'noreply@codesapiens.in',
