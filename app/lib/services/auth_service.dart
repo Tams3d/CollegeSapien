@@ -49,6 +49,7 @@ class AuthService {
     await credential.user?.updateDisplayName(name.trim());
     await credential.user?.getIdToken(true);
     await ApiService.instance.post('/auth/signup', {'name': name.trim()});
+    await credential.user?.sendEmailVerification();
   }
 
   Future<AuthSyncResult> signInWithGoogle() async {

@@ -283,7 +283,7 @@ export const getAttendanceSummary = async (req: AuthRequest, res: Response) => {
     const threshold = (userData?.attendanceThreshold || 75) / 100;
     const now = new Date();
     const timezoneOffsetMinutes = Number.parseInt(
-      req.query.timezoneOffsetMinutes?.toString() || '0',
+      req.query?.timezoneOffsetMinutes?.toString() || '0',
       10
     );
     const safeTimezoneOffsetMinutes = Number.isNaN(timezoneOffsetMinutes)

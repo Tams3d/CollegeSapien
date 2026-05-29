@@ -3,7 +3,7 @@ import { AuthRequest } from '../../shared/middlewares/auth.middleware';
 import { OnboardingSchema, ProfileUpdateSchema } from './auth.model';
 import * as admin from 'firebase-admin';
 import { zodError } from '../../shared/zod-error';
-import { sendLoginLinkEmail } from '../../ses/ses.service';
+// import { sendLoginLinkEmail } from '../../ses/ses.service';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -192,16 +192,8 @@ export const signup = async (req: AuthRequest, res: Response) => {
 
     await firestore().collection('users').doc(uid).set(profileData, { merge: true });
 
-    const actionCodeSettings = {
-      url: process.env.APP_URL || 'https://codesapiens.in/verify',
-      handleCodeInApp: false,
-    };
-
-    const link = await admin.auth().generateEmailVerificationLink(email, actionCodeSettings);
-    await sendLoginLinkEmail(email, link);
-
     return res.status(201).json({
-      message: 'Signup initiated. Verification link sent to email.',
+      message: 'Signup successful. Please verify your email via the link sent by Firebase.',
       user: profileData,
     });
   } catch (error: any) {
