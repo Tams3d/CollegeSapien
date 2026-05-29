@@ -54,7 +54,8 @@ class DefaultFirebaseOptions {
     appId: '1:186941997391:android:ad107546857d411763853a',
     messagingSenderId: '186941997391',
     projectId: 'collegesapiens',
-    databaseURL: 'https://collegesapiens-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://collegesapiens-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'collegesapiens.firebasestorage.app',
   );
 
@@ -63,9 +64,11 @@ class DefaultFirebaseOptions {
     appId: '1:186941997391:ios:53f25851ab79a73563853a',
     messagingSenderId: '186941997391',
     projectId: 'collegesapiens',
-    databaseURL: 'https://collegesapiens-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://collegesapiens-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'collegesapiens.firebasestorage.app',
-    iosClientId: '186941997391-gtkj2ju7f2l3e2rkmalvtveug5bnbt5q.apps.googleusercontent.com',
+    iosClientId:
+        '186941997391-gtkj2ju7f2l3e2rkmalvtveug5bnbt5q.apps.googleusercontent.com',
     iosBundleId: 'com.collegesapien.app',
   );
 }

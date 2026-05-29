@@ -34,10 +34,11 @@ async function setAdmin() {
   await admin.auth().setCustomUserClaims(user.uid, { role, collegeId });
   console.log(`Custom claims set: role=${role}, collegeId=${collegeId}`);
 
-  await admin.firestore().collection('users').doc(user.uid).set(
-    { role, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
-    { merge: true }
-  );
+  await admin
+    .firestore()
+    .collection('users')
+    .doc(user.uid)
+    .set({ role, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
   console.log('Firestore role updated.');
   console.log('\nDone. Ask the user to sign out and sign back in to refresh their token.');
   process.exit(0);

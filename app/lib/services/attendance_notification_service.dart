@@ -126,7 +126,8 @@ class AttendanceNotificationService {
       id: 9999,
       title: 'Mark CS101 attendance',
       body: '09:00 - 10:00 · Room 301',
-      scheduledDate: tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10)),
+      scheduledDate:
+          tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10)),
       notificationDetails: _notificationDetails(),
       androidScheduleMode: scheduleMode,
       payload: jsonEncode({

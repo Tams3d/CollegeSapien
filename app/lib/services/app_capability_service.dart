@@ -29,7 +29,10 @@ class AppCapabilities {
       role == 'moderator' || role == 'admin' || role == 'superadmin';
 
   bool get bypassResourceUnlock =>
-      role == 'ambassador' || role == 'moderator' || role == 'admin' || role == 'superadmin';
+      role == 'ambassador' ||
+      role == 'moderator' ||
+      role == 'admin' ||
+      role == 'superadmin';
 
   bool get isSuperAdmin => role == 'superadmin';
 
@@ -64,7 +67,8 @@ class AppCapabilityService {
     _cachedAt = null;
   }
 
-  Future<AppCapabilities> resolveCapabilities({bool forceRefresh = false}) async {
+  Future<AppCapabilities> resolveCapabilities(
+      {bool forceRefresh = false}) async {
     final user = _auth.currentUser;
     if (user == null) {
       invalidate();
@@ -86,7 +90,8 @@ class AppCapabilityService {
       caps = AppCapabilities.fromRole(claimRole, isAuthenticated: true);
     } else {
       final profileRole = await _resolveRoleFromSyncedProfile();
-      caps = AppCapabilities.fromRole(profileRole ?? 'user', isAuthenticated: true);
+      caps = AppCapabilities.fromRole(profileRole ?? 'user',
+          isAuthenticated: true);
     }
 
     _cached = caps;

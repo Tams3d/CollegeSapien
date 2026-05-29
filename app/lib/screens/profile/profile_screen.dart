@@ -61,7 +61,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (cachedSemester != null && mounted) {
       setState(() => _semesterStat = cachedSemester);
     }
-    final cachedFilesUploaded = CacheService.instance.get<String>(_filesUploadedCacheKey);
+    final cachedFilesUploaded =
+        CacheService.instance.get<String>(_filesUploadedCacheKey);
     if (cachedFilesUploaded != null && mounted) {
       setState(() => _filesUploaded = cachedFilesUploaded);
     }
@@ -233,8 +234,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildStatCard(
-                        'Files Uploaded', _filesUploaded, AppColors.accentPurple),
+                    child: _buildStatCard('Files Uploaded', _filesUploaded,
+                        AppColors.accentPurple),
                   ),
                 ],
               ),
@@ -351,7 +352,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             if (isEmpty) ...[
-              const Icon(Icons.calculate_outlined, size: 26, color: Colors.black),
+              const Icon(Icons.calculate_outlined,
+                  size: 26, color: Colors.black),
               const SizedBox(height: 6),
               Text(
                 emptyHint,

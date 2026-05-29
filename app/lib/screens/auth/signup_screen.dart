@@ -179,8 +179,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     labelText: 'Full Name',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Enter your name' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Enter your name'
+                      : null,
                 ),
                 const SizedBox(height: 14),
 
@@ -248,15 +249,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 // Terms checkbox — neo-brutalist row
                 GestureDetector(
-                  onTap: () =>
-                      setState(() => _agreedToTerms = !_agreedToTerms),
+                  onTap: () => setState(() => _agreedToTerms = !_agreedToTerms),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: _agreedToTerms
-                          ? AppColors.accentGreen
-                          : Colors.white,
+                      color:
+                          _agreedToTerms ? AppColors.accentGreen : Colors.white,
                       border: Border.all(color: Colors.black, width: 2),
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: const [
@@ -273,8 +272,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             color: _agreedToTerms
                                 ? Colors.black
                                 : Colors.transparent,
-                            border:
-                                Border.all(color: Colors.black, width: 2),
+                            border: Border.all(color: Colors.black, width: 2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: _agreedToTerms
@@ -301,7 +299,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 24),
 
                 // Sign up button
-                _primaryButton(label: 'Sign Up', onTap: _loading ? null : _signup),
+                _primaryButton(
+                    label: 'Sign Up', onTap: _loading ? null : _signup),
                 const SizedBox(height: 20),
 
                 // OR divider

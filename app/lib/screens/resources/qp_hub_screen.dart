@@ -339,17 +339,15 @@ class _QpHubScreenState extends State<QpHubScreen> {
                     ..sort();
 
                   final query = _searchController.text.toLowerCase();
-                  final resources = allResources
-                      .where((r) {
-                        final matchesSearch = query.isEmpty ||
-                            r.name.toLowerCase().contains(query);
-                        final matchesDept = _selectedDepartment == null ||
-                            r.department == _selectedDepartment;
-                        final matchesReg = _selectedRegulation == null ||
-                            r.regulation == _selectedRegulation;
-                        return matchesSearch && matchesDept && matchesReg;
-                      })
-                      .toList();
+                  final resources = allResources.where((r) {
+                    final matchesSearch =
+                        query.isEmpty || r.name.toLowerCase().contains(query);
+                    final matchesDept = _selectedDepartment == null ||
+                        r.department == _selectedDepartment;
+                    final matchesReg = _selectedRegulation == null ||
+                        r.regulation == _selectedRegulation;
+                    return matchesSearch && matchesDept && matchesReg;
+                  }).toList();
 
                   return ListView(
                     padding: const EdgeInsets.all(20),
@@ -418,7 +416,8 @@ class _QpHubScreenState extends State<QpHubScreen> {
                             ...regulations.map(
                               (reg) => DropdownMenuItem<String?>(
                                 value: reg,
-                                child: Text(reg, overflow: TextOverflow.ellipsis),
+                                child:
+                                    Text(reg, overflow: TextOverflow.ellipsis),
                               ),
                             ),
                           ],
@@ -644,8 +643,7 @@ class _QpHubScreenState extends State<QpHubScreen> {
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
       }
     });

@@ -135,8 +135,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                 return Stack(
                   children: List.generate(8, (index) {
                     final double startX = -200 + (index * 150.0);
-                    final double currentX =
-                        startX + (_animationController.value * screenWidth * 1.5);
+                    final double currentX = startX +
+                        (_animationController.value * screenWidth * 1.5);
                     final double yPosition = 100 + (index * 80.0);
 
                     final List<Color> colors = [
@@ -159,7 +159,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                           width: 60 + (index % 3) * 20,
                           height: 60 + (index % 3) * 20,
                           decoration: BoxDecoration(
-                            color: colors[index % colors.length].withValues(alpha: 0.7),
+                            color: colors[index % colors.length]
+                                .withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.black, width: 2),
                           ),
@@ -180,151 +181,152 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                const SizedBox(height: 20),
-                const Text(
-                  'Tell us about yourself',
-                  style: TextStyle(
-                    fontFamily: 'Lexend Mega',
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'We need this info to personalize your experience',
-                  style: TextStyle(
-                    fontFamily: 'Public Sans',
-                    fontSize: 14,
-                    color: Colors.black.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(height: 40),
-
-                // Name Field
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // College Dropdown
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedCollegeId,
-                  decoration: const InputDecoration(
-                    labelText: 'College',
-                    prefixIcon: Icon(Icons.school_outlined),
-                  ),
-                  isExpanded: true,
-                  items: _colleges.map((college) {
-                    return DropdownMenuItem(
-                      value: college.id,
-                      child: Text(
-                        college.name,
-                        overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Tell us about yourself',
+                      style: TextStyle(
+                        fontFamily: 'Lexend Mega',
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                        color: Colors.black,
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCollegeId = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Department Dropdown
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedDepartment,
-                  decoration: const InputDecoration(
-                    labelText: 'Department',
-                    prefixIcon: Icon(Icons.engineering_outlined),
-                  ),
-                  items: _departments.map((dept) {
-                    return DropdownMenuItem(
-                      value: dept,
-                      child: Text(dept),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedDepartment = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Semester Dropdown
-                DropdownButtonFormField<int>(
-                  initialValue: _selectedSemester,
-                  decoration: const InputDecoration(
-                    labelText: 'Current Semester',
-                    prefixIcon: Icon(Icons.calendar_month_outlined),
-                  ),
-                  items: _semesters.map((sem) {
-                    return DropdownMenuItem(
-                      value: sem,
-                      child: Text('Semester $sem'),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedSemester = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 40),
-
-                // Submit Button
-                SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleSubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryYellow,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(color: Colors.black, width: 2),
                     ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.black,
-                            ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'We need this info to personalize your experience',
+                      style: TextStyle(
+                        fontFamily: 'Public Sans',
+                        fontSize: 14,
+                        color: Colors.black.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+
+                    // Name Field
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Full Name',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // College Dropdown
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedCollegeId,
+                      decoration: const InputDecoration(
+                        labelText: 'College',
+                        prefixIcon: Icon(Icons.school_outlined),
+                      ),
+                      isExpanded: true,
+                      items: _colleges.map((college) {
+                        return DropdownMenuItem(
+                          value: college.id,
+                          child: Text(
+                            college.name,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        )
-                      : const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCollegeId = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Department Dropdown
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedDepartment,
+                      decoration: const InputDecoration(
+                        labelText: 'Department',
+                        prefixIcon: Icon(Icons.engineering_outlined),
+                      ),
+                      items: _departments.map((dept) {
+                        return DropdownMenuItem(
+                          value: dept,
+                          child: Text(dept),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedDepartment = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Semester Dropdown
+                    DropdownButtonFormField<int>(
+                      initialValue: _selectedSemester,
+                      decoration: const InputDecoration(
+                        labelText: 'Current Semester',
+                        prefixIcon: Icon(Icons.calendar_month_outlined),
+                      ),
+                      items: _semesters.map((sem) {
+                        return DropdownMenuItem(
+                          value: sem,
+                          child: Text('Semester $sem'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSemester = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 40),
+
+                    // Submit Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleSubmit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryYellow,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side:
+                                const BorderSide(color: Colors.black, width: 2),
                           ),
+                          elevation: 0,
                         ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.black,
+                                  ),
+                                ),
+                              )
+                            : const Text(
+                                'Continue',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
           ],
         ),
       ),

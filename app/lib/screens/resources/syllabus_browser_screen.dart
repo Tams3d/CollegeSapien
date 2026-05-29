@@ -246,17 +246,15 @@ class _SyllabusBrowserScreenState extends State<SyllabusBrowserScreen> {
                     ..sort();
 
                   final query = _searchController.text.toLowerCase();
-                  final items = allItems
-                      .where((r) {
-                        final matchesSearch = query.isEmpty ||
-                            r.name.toLowerCase().contains(query);
-                        final matchesDept = _selectedDepartment == null ||
-                            r.department == _selectedDepartment;
-                        final matchesReg = _selectedRegulation == null ||
-                            r.regulation == _selectedRegulation;
-                        return matchesSearch && matchesDept && matchesReg;
-                      })
-                      .toList();
+                  final items = allItems.where((r) {
+                    final matchesSearch =
+                        query.isEmpty || r.name.toLowerCase().contains(query);
+                    final matchesDept = _selectedDepartment == null ||
+                        r.department == _selectedDepartment;
+                    final matchesReg = _selectedRegulation == null ||
+                        r.regulation == _selectedRegulation;
+                    return matchesSearch && matchesDept && matchesReg;
+                  }).toList();
 
                   return ListView(
                     padding: const EdgeInsets.all(20),
@@ -325,7 +323,8 @@ class _SyllabusBrowserScreenState extends State<SyllabusBrowserScreen> {
                             ...regulations.map(
                               (reg) => DropdownMenuItem<String?>(
                                 value: reg,
-                                child: Text(reg, overflow: TextOverflow.ellipsis),
+                                child:
+                                    Text(reg, overflow: TextOverflow.ellipsis),
                               ),
                             ),
                           ],
@@ -337,8 +336,8 @@ class _SyllabusBrowserScreenState extends State<SyllabusBrowserScreen> {
                       if (items.isEmpty)
                         Container(
                           padding: const EdgeInsets.all(20),
-                          decoration:
-                              AppTheme.cardDecoration(color: AppColors.accentGreen),
+                          decoration: AppTheme.cardDecoration(
+                              color: AppColors.accentGreen),
                           child: const Text('No syllabus documents found.'),
                         )
                       else

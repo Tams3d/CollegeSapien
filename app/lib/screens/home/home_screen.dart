@@ -122,7 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _semester = 0;
   final Set<String> _markedSlots = {};
 
-  static String get _todayMarkedKey => 'marked_slots_${_dateKey(DateTime.now())}';
+  static String get _todayMarkedKey =>
+      'marked_slots_${_dateKey(DateTime.now())}';
 
   Future<void> _loadMarkedSlots() async {
     try {
@@ -131,7 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => _markedSlots.addAll(saved));
 
       // Remove entries from previous days to avoid unbounded growth
-      final keysToRemove = prefs.getKeys()
+      final keysToRemove = prefs
+          .getKeys()
           .where((k) => k.startsWith('marked_slots_') && k != _todayMarkedKey)
           .toList();
       for (final k in keysToRemove) {
@@ -918,7 +920,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const Positioned(
                   top: 2,
                   right: 2,
-                  child: Icon(Icons.check_circle_outline, size: 18, color: Color(0xFF16A34A)),
+                  child: Icon(Icons.check_circle_outline,
+                      size: 18, color: Color(0xFF16A34A)),
                 ),
             ],
           ),

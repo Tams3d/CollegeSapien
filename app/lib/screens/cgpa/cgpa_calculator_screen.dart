@@ -10,7 +10,8 @@ class _SemesterEntry {
   int semester;
   double gpa;
   int credits;
-  _SemesterEntry({required this.semester, required this.gpa, required this.credits});
+  _SemesterEntry(
+      {required this.semester, required this.gpa, required this.credits});
 }
 
 class CgpaCalculatorScreen extends StatefulWidget {
@@ -58,7 +59,8 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
 
     try {
       final result = await _academicService.calculateCgpaFromImage(image.path);
-      final cgpa = (result['cgpa'] as num? ?? result['gpa'] as num? ?? 0).toDouble();
+      final cgpa =
+          (result['cgpa'] as num? ?? result['gpa'] as num? ?? 0).toDouble();
       if (!mounted) return;
 
       // If AI returns a CGPA, add it as a single entry if list is empty
@@ -111,14 +113,16 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
             children: [
               TextFormField(
                 controller: gpaController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'GPA (e.g. 8.5)',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
                   final val = double.tryParse(v ?? '');
-                  if (val == null || val < 0 || val > 10) return 'Enter a valid GPA (0–10)';
+                  if (val == null || val < 0 || val > 10)
+                    return 'Enter a valid GPA (0–10)';
                   return null;
                 },
               ),
@@ -132,7 +136,8 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
                 ),
                 validator: (v) {
                   final val = int.tryParse(v ?? '');
-                  if (val == null || val <= 0) return 'Enter total credits for this semester';
+                  if (val == null || val <= 0)
+                    return 'Enter total credits for this semester';
                   return null;
                 },
               ),
@@ -145,7 +150,8 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryYellow),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryYellow),
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
               setState(() {
@@ -252,8 +258,10 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
                         ),
                         const SizedBox(height: 20),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: AppTheme.badgeDecoration(color: AppColors.accentGreen),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: AppTheme.badgeDecoration(
+                              color: AppColors.accentGreen),
                           child: Text(
                             _getMotivationalMessage(),
                             style: const TextStyle(
@@ -313,7 +321,8 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
                       GestureDetector(
                         onTap: _showAddSemesterDialog,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: AppTheme.cardDecoration(
                             color: AppColors.accentGreen,
                             shadowOffset: const Offset(2, 2),
@@ -342,15 +351,19 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
                   if (_semesters.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(24),
-                      decoration: AppTheme.cardDecoration(color: AppColors.accentBlue),
+                      decoration:
+                          AppTheme.cardDecoration(color: AppColors.accentBlue),
                       child: const Text(
                         'No semesters yet. Add your semester GPA and credits to calculate your CGPA.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontFamily: 'Public Sans', fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontFamily: 'Public Sans',
+                            fontWeight: FontWeight.w600),
                       ),
                     )
                   else
-                    ...List.generate(_semesters.length, (i) => _buildSemesterCard(i)),
+                    ...List.generate(
+                        _semesters.length, (i) => _buildSemesterCard(i)),
 
                   const SizedBox(height: 80),
                 ],
@@ -366,7 +379,8 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryYellow),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primaryYellow),
                       ),
                       const SizedBox(height: 16),
                       const Text(

@@ -69,204 +69,210 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListenableBuilder(
         listenable: AppThemeNotifier.instance,
         builder: (context, _) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Notifications',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF191C1E),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF191C1E),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              _buildSwitchTile(
-                'Enable Notifications',
-                _notificationsEnabled,
-                (value) {
-                  setState(() {
-                    _notificationsEnabled = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildSwitchTile(
-                'Class Reminders',
-                _classReminders,
-                (value) {
-                  setState(() {
-                    _classReminders = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildSwitchTile(
-                'Attendance Alerts',
-                _attendanceAlerts,
-                (value) {
-                  setState(() {
-                    _attendanceAlerts = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: _sendingTest ? null : _sendTestNotification,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  decoration: AppTheme.cardDecoration(color: AppColors.accentGreen),
-                  child: Row(
+                const SizedBox(height: 16),
+                _buildSwitchTile(
+                  'Enable Notifications',
+                  _notificationsEnabled,
+                  (value) {
+                    setState(() {
+                      _notificationsEnabled = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildSwitchTile(
+                  'Class Reminders',
+                  _classReminders,
+                  (value) {
+                    setState(() {
+                      _classReminders = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildSwitchTile(
+                  'Attendance Alerts',
+                  _attendanceAlerts,
+                  (value) {
+                    setState(() {
+                      _attendanceAlerts = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: _sendingTest ? null : _sendTestNotification,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
+                    decoration:
+                        AppTheme.cardDecoration(color: AppColors.accentGreen),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.notifications_active_outlined,
+                            size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Send Test Notification',
+                                style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              Text(
+                                _sendingTest
+                                    ? 'Firing in 10 s…'
+                                    : 'Fires in 10 seconds',
+                                style: const TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 12,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_sendingTest)
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.black),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'Attendance',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF191C1E),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: AppTheme.cardDecoration(color: Colors.white),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.notifications_active_outlined, size: 20),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Send Test Notification',
-                              style: TextStyle(
-                                fontFamily: 'Public Sans',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
-                              ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Alert Threshold',
+                            style: TextStyle(
+                              fontFamily: 'Public Sans',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
                             ),
-                            Text(
-                              _sendingTest ? 'Firing in 10 s…' : 'Fires in 10 seconds',
-                              style: const TextStyle(
-                                fontFamily: 'Public Sans',
-                                fontSize: 12,
-                                color: Colors.black,
-                              ),
+                          ),
+                          Text(
+                            '${_attendanceThreshold.toInt()}%',
+                            style: const TextStyle(
+                              fontFamily: 'Lexend Mega',
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      if (_sendingTest)
-                        const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                        ),
+                      Slider(
+                        value: _attendanceThreshold,
+                        min: 50,
+                        max: 90,
+                        divisions: 8,
+                        activeColor: AppColors.primaryYellow,
+                        inactiveColor: Colors.grey[300],
+                        onChanged: (value) {
+                          setState(() {
+                            _attendanceThreshold = value;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 30),
-              const Text(
-                'Attendance',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF191C1E),
+                const SizedBox(height: 30),
+                const Text(
+                  'Theme',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF191C1E),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: AppTheme.cardDecoration(color: Colors.white),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Alert Threshold',
-                          style: TextStyle(
-                            fontFamily: 'Public Sans',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
+                const SizedBox(height: 16),
+                _buildThemePicker(),
+                const SizedBox(height: 30),
+                const Text(
+                  'About',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF191C1E),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration:
+                      AppTheme.cardDecoration(color: AppColors.accentBlue),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Codesapiens',
+                        style: TextStyle(
+                          fontFamily: 'Lexend Mega',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
                         ),
-                        Text(
-                          '${_attendanceThreshold.toInt()}%',
-                          style: const TextStyle(
-                            fontFamily: 'Lexend Mega',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                          ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Version 1.0.0',
+                        style: TextStyle(
+                          fontFamily: 'Public Sans',
+                          fontSize: 14,
+                          color: Colors.black.withValues(alpha: 0.7),
                         ),
-                      ],
-                    ),
-                    Slider(
-                      value: _attendanceThreshold,
-                      min: 50,
-                      max: 90,
-                      divisions: 8,
-                      activeColor: AppColors.primaryYellow,
-                      inactiveColor: Colors.grey[300],
-                      onChanged: (value) {
-                        setState(() {
-                          _attendanceThreshold = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-              const Text(
-                'Theme',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF191C1E),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildThemePicker(),
-              const SizedBox(height: 30),
-              const Text(
-                'About',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF191C1E),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration:
-                    AppTheme.cardDecoration(color: AppColors.accentBlue),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Codesapiens',
-                      style: TextStyle(
-                        fontFamily: 'Lexend Mega',
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Version 1.0.0',
-                      style: TextStyle(
-                        fontFamily: 'Public Sans',
-                        fontSize: 14,
-                        color: Colors.black.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -293,7 +299,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: isActive
-                    ? const [BoxShadow(offset: Offset(3, 3), color: Colors.black)]
+                    ? const [
+                        BoxShadow(offset: Offset(3, 3), color: Colors.black)
+                      ]
                     : null,
               ),
               child: Column(

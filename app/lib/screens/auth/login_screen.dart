@@ -89,8 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryYellow),
@@ -106,8 +105,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (mounted) _snack(e.toString(), error: true);
               }
             },
-            child: const Text('Send Link',
-                style: TextStyle(color: Colors.black)),
+            child:
+                const Text('Send Link', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -218,8 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     suffixIcon: IconButton(
                       icon: Icon(
                           _obscure ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () =>
-                          setState(() => _obscure = !_obscure),
+                      onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   validator: (v) {
@@ -294,7 +292,9 @@ class _LoginScreenState extends State<LoginScreen> {
           color: AppColors.primaryYellow,
           border: Border.all(color: Colors.black, width: 2),
           borderRadius: BorderRadius.circular(8),
-          boxShadow: const [BoxShadow(offset: Offset(4, 4), color: Colors.black)],
+          boxShadow: const [
+            BoxShadow(offset: Offset(4, 4), color: Colors.black)
+          ],
         ),
         child: Center(
           child: _loading
@@ -329,7 +329,9 @@ class _LoginScreenState extends State<LoginScreen> {
           color: Colors.white,
           border: Border.all(color: Colors.black, width: 2),
           borderRadius: BorderRadius.circular(8),
-          boxShadow: const [BoxShadow(offset: Offset(3, 3), color: Colors.black)],
+          boxShadow: const [
+            BoxShadow(offset: Offset(3, 3), color: Colors.black)
+          ],
         ),
         child: Center(
           child: Text(
@@ -355,7 +357,9 @@ class _LoginScreenState extends State<LoginScreen> {
           color: Colors.white,
           border: Border.all(color: Colors.black, width: 2),
           borderRadius: BorderRadius.circular(8),
-          boxShadow: const [BoxShadow(offset: Offset(3, 3), color: Colors.black)],
+          boxShadow: const [
+            BoxShadow(offset: Offset(3, 3), color: Colors.black)
+          ],
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,

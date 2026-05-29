@@ -24,7 +24,8 @@ class ResourceService {
         .any((item) => item.uploadedBy == uid);
   }
 
-  Future<List<HubResource>> listHubResources(String category, {
+  Future<List<HubResource>> listHubResources(
+    String category, {
     String? department,
     String? regulation,
     String? subjectCode,
@@ -37,8 +38,8 @@ class ResourceService {
     final query = params.entries
         .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
         .join('&');
-    final json = await ApiService.instance
-        .get('/resources/hub?$query') as List<dynamic>;
+    final json =
+        await ApiService.instance.get('/resources/hub?$query') as List<dynamic>;
     return json
         .map((item) => HubResource.fromJson(item as Map<String, dynamic>))
         .toList();
@@ -57,8 +58,8 @@ class ResourceService {
     final query = params.isNotEmpty
         ? '?${params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&')}'
         : '';
-    final json =
-        await ApiService.instance.get('/resources/syllabus$query') as List<dynamic>;
+    final json = await ApiService.instance.get('/resources/syllabus$query')
+        as List<dynamic>;
     return json
         .map((item) => HubResource.fromJson(item as Map<String, dynamic>))
         .toList();

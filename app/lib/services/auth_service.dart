@@ -23,12 +23,15 @@ class AuthService {
   User? get currentUser => _auth.currentUser;
 
   Future<AuthSyncResult> syncProfile() async {
-    final json = await ApiService.instance.post('/auth/sync') as Map<String, dynamic>;
+    final json =
+        await ApiService.instance.post('/auth/sync') as Map<String, dynamic>;
     return AuthSyncResult.fromJson(json);
   }
 
-  Future<AuthSyncResult> signInWithEmailPassword(String email, String password) async {
-    await _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+  Future<AuthSyncResult> signInWithEmailPassword(
+      String email, String password) async {
+    await _auth.signInWithEmailAndPassword(
+        email: email.trim(), password: password);
     await _auth.currentUser?.reload();
     await _auth.currentUser?.getIdToken(true);
     return syncProfile();
@@ -63,7 +66,8 @@ class AuthService {
     final googleAuth = await googleUser.authentication;
 
     if (googleAuth.idToken == null && googleAuth.accessToken == null) {
-      throw ApiException(500, 'Google sign-in failed: could not obtain credentials. Ensure your SHA-1 fingerprint is registered in Firebase Console.');
+      throw ApiException(500,
+          'Google sign-in failed: could not obtain credentials. Ensure your SHA-1 fingerprint is registered in Firebase Console.');
     }
 
     final credential = GoogleAuthProvider.credential(

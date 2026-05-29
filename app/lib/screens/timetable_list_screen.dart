@@ -21,7 +21,8 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
   @override
   void initState() {
     super.initState();
-    final cached = CacheService.instance.get<List<TimetableSubject>>('timetable_subjects');
+    final cached =
+        CacheService.instance.get<List<TimetableSubject>>('timetable_subjects');
     if (cached != null) {
       _subjects = cached;
       _isLoading = false;
@@ -177,13 +178,15 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
     final nameController = TextEditingController(text: subject?.name ?? '');
     final codeController = TextEditingController(text: subject?.code ?? '');
 
-    final List<Map<String, String>> slots = subject?.classes.map((c) => {
-          'day': c.day,
-          'startTime': c.startTime,
-          'endTime': c.endTime,
-          'room': c.room,
-          'type': c.type,
-        }).toList() ??
+    final List<Map<String, String>> slots = subject?.classes
+            .map((c) => {
+                  'day': c.day,
+                  'startTime': c.startTime,
+                  'endTime': c.endTime,
+                  'room': c.room,
+                  'type': c.type,
+                })
+            .toList() ??
         [];
 
     final days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -225,36 +228,41 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                             initialValue: selectedDay,
                             decoration: const InputDecoration(labelText: 'Day'),
                             items: days
-                                .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                                .map((d) =>
+                                    DropdownMenuItem(value: d, child: Text(d)))
                                 .toList(),
-                            onChanged: (v) => setDlgState(() => selectedDay = v!),
+                            onChanged: (v) =>
+                                setDlgState(() => selectedDay = v!),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: startController,
-                            decoration:
-                                const InputDecoration(labelText: 'Start Time (HH:MM)'),
+                            decoration: const InputDecoration(
+                                labelText: 'Start Time (HH:MM)'),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: endController,
-                            decoration:
-                                const InputDecoration(labelText: 'End Time (HH:MM)'),
+                            decoration: const InputDecoration(
+                                labelText: 'End Time (HH:MM)'),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: roomController,
-                            decoration:
-                                const InputDecoration(labelText: 'Room (optional)'),
+                            decoration: const InputDecoration(
+                                labelText: 'Room (optional)'),
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
                             initialValue: selectedType,
-                            decoration: const InputDecoration(labelText: 'Type'),
+                            decoration:
+                                const InputDecoration(labelText: 'Type'),
                             items: types
-                                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                                .map((t) =>
+                                    DropdownMenuItem(value: t, child: Text(t)))
                                 .toList(),
-                            onChanged: (v) => setDlgState(() => selectedType = v!),
+                            onChanged: (v) =>
+                                setDlgState(() => selectedType = v!),
                           ),
                         ],
                       ),
@@ -291,7 +299,8 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
               final code = codeController.text.trim();
               if (name.isEmpty || code.isEmpty) {
                 ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('Subject name and code are required.')),
+                  const SnackBar(
+                      content: Text('Subject name and code are required.')),
                 );
                 return;
               }
@@ -305,7 +314,9 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                     day: s['day'] ?? 'MON',
                     startTime: start,
                     endTime: s['endTime'] ?? start,
-                    period: (int.tryParse(start.split(':').first) ?? 9) >= 12 ? 'PM' : 'AM',
+                    period: (int.tryParse(start.split(':').first) ?? 9) >= 12
+                        ? 'PM'
+                        : 'AM',
                     room: s['room'] ?? '',
                     type: s['type'] ?? 'CORE',
                     duration: 1,
@@ -313,7 +324,9 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                 }).toList();
 
                 final newSubject = TimetableSubject(
-                  id: isEditing ? subject.id : code.toLowerCase().replaceAll(' ', '_'),
+                  id: isEditing
+                      ? subject.id
+                      : code.toLowerCase().replaceAll(' ', '_'),
                   name: name,
                   code: code,
                   classes: classes,
@@ -426,14 +439,16 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                           title: Text(
                             '${s['day']} ${s['startTime']}–${s['endTime']}',
                             style: const TextStyle(
-                                fontFamily: 'Public Sans', fontWeight: FontWeight.w600),
+                                fontFamily: 'Public Sans',
+                                fontWeight: FontWeight.w600),
                           ),
                           subtitle: Text(
                             '${s['type']}${s['room']!.isNotEmpty ? ' · ${s['room']}' : ''}',
                           ),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete_outline),
-                            onPressed: () => setSheetState(() => slots.removeAt(i)),
+                            onPressed: () =>
+                                setSheetState(() => slots.removeAt(i)),
                           ),
                         );
                       }),
@@ -631,7 +646,6 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
               bottom: 20,
               child: _buildScanButton(),
             ),
-
           ],
         ),
       ),
@@ -715,12 +729,14 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                 children: [
                   GestureDetector(
                     onTap: () => _showSubjectSheet(subject: subject),
-                    child: const Icon(Icons.edit_outlined, size: 20, color: Colors.black),
+                    child: const Icon(Icons.edit_outlined,
+                        size: 20, color: Colors.black),
                   ),
                   const SizedBox(height: 12),
                   GestureDetector(
                     onTap: () => _removeSubject(subject),
-                    child: const Icon(Icons.delete_outline, size: 20, color: Colors.black),
+                    child: const Icon(Icons.delete_outline,
+                        size: 20, color: Colors.black),
                   ),
                 ],
               ),

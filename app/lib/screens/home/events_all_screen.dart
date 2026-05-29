@@ -84,7 +84,9 @@ class EventsAllScreen extends StatelessWidget {
             color: AppColors.accentBlue,
             border: Border.all(color: Colors.black, width: 1.5),
             borderRadius: BorderRadius.circular(8),
-            boxShadow: const [BoxShadow(offset: Offset(4, 4), color: Colors.black)],
+            boxShadow: const [
+              BoxShadow(offset: Offset(4, 4), color: Colors.black)
+            ],
           ),
           child: Stack(
             children: [
@@ -153,7 +155,8 @@ class EventsAllScreen extends StatelessWidget {
                             border: Border.all(color: Colors.black),
                             borderRadius: BorderRadius.circular(5),
                             boxShadow: const [
-                              BoxShadow(offset: Offset(2, 2), color: Colors.black)
+                              BoxShadow(
+                                  offset: Offset(2, 2), color: Colors.black)
                             ],
                           ),
                           child: ClipRRect(

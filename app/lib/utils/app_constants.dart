@@ -29,6 +29,7 @@ class AppConstants {
     }
     return baseUrl;
   }
+
   static const String appCheckRecaptchaSiteKey = String.fromEnvironment(
     'CODESAPIENS_RECAPTCHA_SITE_KEY',
     defaultValue: '',

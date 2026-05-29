@@ -163,13 +163,17 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
               // Timer Display
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
                 decoration: BoxDecoration(
                   color: _getModeColor(),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.black, width: 3),
                   boxShadow: const [
-                    BoxShadow(color: Colors.black, offset: Offset(8, 8), blurRadius: 0),
+                    BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(8, 8),
+                        blurRadius: 0),
                   ],
                 ),
                 child: Column(
@@ -193,7 +197,8 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
                           backgroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(color: Colors.black, width: 2),
+                            side:
+                                const BorderSide(color: Colors.black, width: 2),
                           ),
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -220,11 +225,13 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-                decoration: AppTheme.cardDecoration(color: AppColors.accentPurple),
+                decoration:
+                    AppTheme.cardDecoration(color: AppColors.accentPurple),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.check_circle, size: 28, color: Colors.black),
+                    const Icon(Icons.check_circle,
+                        size: 28, color: Colors.black),
                     const SizedBox(width: 12),
                     Text(
                       '$_sessionsCompleted session${_sessionsCompleted == 1 ? '' : 's'} completed',
@@ -267,18 +274,22 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
                         ),
                         filled: true,
                         fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.black, width: 2),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 2),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.black, width: 2),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 2),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.black, width: 2),
+                          borderSide:
+                              const BorderSide(color: Colors.black, width: 2),
                         ),
                       ),
                     ),
@@ -292,7 +303,8 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
                         color: AppColors.primaryYellow,
                         shadowOffset: const Offset(2, 2),
                       ),
-                      child: const Icon(Icons.add, size: 24, color: Colors.black),
+                      child:
+                          const Icon(Icons.add, size: 24, color: Colors.black),
                     ),
                   ),
                 ],
@@ -333,7 +345,9 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: AppTheme.cardDecoration(
-        color: isDone ? AppColors.accentGreen.withValues(alpha: 0.6) : Colors.white,
+        color: isDone
+            ? AppColors.accentGreen.withValues(alpha: 0.6)
+            : Colors.white,
         shadowOffset: const Offset(2, 2),
       ),
       child: Row(
@@ -370,7 +384,8 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
           ),
           GestureDetector(
             onTap: () => _deleteTask(index),
-            child: Icon(Icons.close, size: 18, color: Colors.black.withValues(alpha: 0.5)),
+            child: Icon(Icons.close,
+                size: 18, color: Colors.black.withValues(alpha: 0.5)),
           ),
         ],
       ),
@@ -386,11 +401,16 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _getModeColor() : Colors.white.withValues(alpha: 0.5),
+          color: isSelected
+              ? _getModeColor()
+              : Colors.white.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.black, width: isSelected ? 2 : 1),
           boxShadow: isSelected
-              ? [const BoxShadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0)]
+              ? [
+                  const BoxShadow(
+                      color: Colors.black, offset: Offset(3, 3), blurRadius: 0)
+                ]
               : [],
         ),
         child: Text(

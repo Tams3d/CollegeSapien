@@ -56,7 +56,8 @@ class TimetableCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     color: Colors.black,
                     colorBlendMode: BlendMode.darken,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox(),
                   ),
                 ),
               ),
