@@ -144,7 +144,8 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
         return;
       }
 
-      await _timetableService.scanTimetableImage(image.path);
+      final bytes = await image.readAsBytes();
+      await _timetableService.scanTimetableImage(bytes);
       final subjects = await _timetableService.getAllSubjects();
 
       setState(() {

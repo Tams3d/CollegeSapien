@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -67,8 +64,22 @@ class DefaultFirebaseOptions {
     databaseURL:
         'https://collegesapiens-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'collegesapiens.firebasestorage.app',
+    androidClientId:
+        '186941997391-98bbgrjf9ggq3j0vihjsp717b7sp9ak1.apps.googleusercontent.com',
     iosClientId:
         '186941997391-gtkj2ju7f2l3e2rkmalvtveug5bnbt5q.apps.googleusercontent.com',
     iosBundleId: 'com.collegesapien.app',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyDECOq1_5vzhmkL8aeJIMOi-dJYGXLMTew',
+    appId: '1:186941997391:web:61645e8ad5d3e27c63853a',
+    messagingSenderId: '186941997391',
+    projectId: 'collegesapiens',
+    authDomain: 'collegesapiens.firebaseapp.com',
+    databaseURL:
+        'https://collegesapiens-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'collegesapiens.firebasestorage.app',
+    measurementId: 'G-VJNX5V0H1P',
   );
 }

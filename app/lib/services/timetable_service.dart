@@ -1,13 +1,12 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import '../models/timetable_models.dart';
 import 'attendance_notification_service.dart';
 import 'api_service.dart';
 
 class TimetableService {
-  Future<TimetableSubject> scanTimetableImage(String imagePath) async {
-    final bytes = await File(imagePath).readAsBytes();
+  Future<TimetableSubject> scanTimetableImage(Uint8List bytes) async {
     final json = await ApiService.instance.post('/timetable/parse', {
       'imageBase64': base64Encode(bytes),
     }) as Map<String, dynamic>;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'utils/app_theme.dart';
 import 'utils/app_constants.dart';
 import 'screens/auth/splash_screen.dart';
@@ -11,16 +12,23 @@ import 'services/attendance_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   if (!AppConstants.disableAppCheck) {
-    await FirebaseAppCheck.instance.activate(
-      androidProvider:
-          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-      appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-      webProvider: AppConstants.appCheckRecaptchaSiteKey.isEmpty
-          ? null
-          : ReCaptchaV3Provider(AppConstants.appCheckRecaptchaSiteKey),
-    );
+    final shouldActivate =
+        !kIsWeb || AppConstants.appCheckRecaptchaSiteKey.isNotEmpty;
+    if (shouldActivate) {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider:
+            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        appleProvider:
+            kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        webProvider: AppConstants.appCheckRecaptchaSiteKey.isEmpty
+            ? null
+            : ReCaptchaV3Provider(AppConstants.appCheckRecaptchaSiteKey),
+      );
+    }
   }
   await AttendanceNotificationService.instance.initialize();
   await AppThemeNotifier.instance.loadSaved();

@@ -1,11 +1,11 @@
-import 'dart:io';
-
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/api_models.dart';
 import 'api_service.dart';
+import 'platform/file_uploader.dart';
 
 class ResourceService {
   final _uuid = const Uuid();
@@ -98,8 +98,7 @@ class ResourceService {
   }
 
   Future<String> uploadLocalFile({
-    required String filePath,
-    required String fileName,
+    required PlatformFile file,
     required String title,
     required String category,
     String? mimeType,
@@ -109,7 +108,8 @@ class ResourceService {
     void Function(double)? onProgress,
   }) async {
     final id = _uuid.v4();
-    final fileSize = await File(filePath).length();
+    final fileSize = file.size;
+    final fileName = file.name;
 
     // Create Firestore doc first so storage read rule can verify uploadedBy
     final resourceId = await uploadResourceMetadata(
@@ -130,16 +130,15 @@ class ResourceService {
     final ref = resourceFileRef(resourceId, fileName);
     final metadata =
         SettableMetadata(contentType: mimeType ?? 'application/pdf');
-    final uploadTask = ref.putFile(File(filePath), metadata);
+    
+    await PlatformFileUploader.uploadFile(
+      ref: ref,
+      file: file,
+      metadata: metadata,
+      onProgress: onProgress,
+    );
 
-    uploadTask.snapshotEvents.listen((event) {
-      if (event.totalBytes > 0) {
-        onProgress?.call(event.bytesTransferred / event.totalBytes);
-      }
-    });
-
-    final snapshot = await uploadTask;
-    final downloadUrl = await snapshot.ref.getDownloadURL();
+    final downloadUrl = await ref.getDownloadURL();
 
     // Update Firestore doc with the final download URL
     await ApiService.instance

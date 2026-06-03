@@ -21,7 +21,8 @@
           "projectId": "collegesapiens",
           "configurations": {
             "android": "1:186941997391:android:ad107546857d411763853a",
-            "ios": "1:186941997391:ios:53f25851ab79a73563853a"
+            "ios": "1:186941997391:ios:53f25851ab79a73563853a",
+            "web": "1:186941997391:web:61645e8ad5d3e27c63853a"
           }
         }
       }

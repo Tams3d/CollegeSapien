@@ -1,6 +1,7 @@
 // App-wide constants
 
-import 'dart:io';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 
 class AppConstants {
   // App Info
@@ -22,9 +23,10 @@ class AppConstants {
     const baseUrl = String.fromEnvironment(
       'CODESAPIENS_API_BASE_URL',
       defaultValue:
-          'http://127.0.0.1:5001/codesapien-college/asia-south1/api/api/v1',
+          'https://asia-south1-collegesapiens.cloudfunctions.net/api/api/v1',
     );
-    if (Platform.isAndroid && baseUrl.contains('127.0.0.1')) {
+    if (defaultTargetPlatform == TargetPlatform.android &&
+        baseUrl.contains('127.0.0.1')) {
       return baseUrl.replaceAll('127.0.0.1', '10.0.2.2');
     }
     return baseUrl;

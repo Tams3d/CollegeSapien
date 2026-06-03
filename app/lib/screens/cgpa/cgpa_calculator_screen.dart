@@ -58,7 +58,8 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
     setState(() => _isScanning = true);
 
     try {
-      final result = await _academicService.calculateCgpaFromImage(image.path);
+      final bytes = await image.readAsBytes();
+      final result = await _academicService.calculateCgpaFromImage(bytes);
       final cgpa =
           (result['cgpa'] as num? ?? result['gpa'] as num? ?? 0).toDouble();
       if (!mounted) return;

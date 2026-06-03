@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/api_models.dart';
@@ -15,10 +16,12 @@ class AuthService {
 
   static final AuthService instance = AuthService._();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: _googleWebClientId,
-    scopes: ['email'],
-  );
+  final GoogleSignIn? _googleSignIn = kIsWeb
+      ? null
+      : GoogleSignIn(
+          serverClientId: _googleWebClientId,
+          scopes: ['email'],
+        );
 
   User? get currentUser => _auth.currentUser;
 
@@ -53,9 +56,28 @@ class AuthService {
   }
 
   Future<AuthSyncResult> signInWithGoogle() async {
+    if (kIsWeb) {
+      try {
+        await _auth.signInWithPopup(GoogleAuthProvider());
+        await _auth.currentUser?.getIdToken(true);
+        return syncProfile();
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'popup-closed-by-user' ||
+            e.code == 'cancelled-popup-request') {
+          throw ApiException(499, 'Google sign-in was cancelled');
+        }
+        throw ApiException(
+          500,
+          'Google sign-in failed: ${e.message ?? e.code}',
+        );
+      } catch (e) {
+        throw ApiException(500, 'Google sign-in failed: ${e.toString()}');
+      }
+    }
+
     GoogleSignInAccount? googleUser;
     try {
-      googleUser = await _googleSignIn.signIn();
+      googleUser = await _googleSignIn!.signIn();
     } catch (e) {
       throw ApiException(500, 'Google sign-in failed: ${e.toString()}');
     }
@@ -107,7 +129,7 @@ class AuthService {
     } catch (_) {
       // Local sign-out should still complete if the API is unreachable.
     }
-    await _googleSignIn.signOut();
+    await _googleSignIn?.signOut();
     await _auth.signOut();
   }
 }

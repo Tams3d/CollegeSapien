@@ -199,13 +199,12 @@ class _NotesHubScreenState extends State<NotesHubScreen> {
       allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
     );
     final file = result?.files.single;
-    if (file?.path == null) return;
+    if (file == null) return;
 
     if (mounted) setState(() => _uploadProgress = 0.0);
     try {
       await _resourceService.uploadLocalFile(
-        filePath: file!.path!,
-        fileName: file.name,
+        file: file,
         title: uploadData['title'] ?? file.name,
         category: 'Notes',
         mimeType: file.extension == 'pdf'
