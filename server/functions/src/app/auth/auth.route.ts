@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getMe,
   updateMe,
+  deleteAccount,
   logout,
   signup,
   login,
@@ -407,5 +408,6 @@ router.get('/me', authenticate, getMe);
  *         description: Unauthorized.
  */
 router.patch('/me', authenticate, requireVerifiedEmail, updateMe);
+router.delete('/me', authenticate, deleteAccount);
 
 export default router;

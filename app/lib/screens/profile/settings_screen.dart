@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/attendance_notification_service.dart';
 import '../../services/app_theme_notifier.dart';
+import '../../services/auth_service.dart';
+import '../../screens/auth/login_screen.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_themes.dart';
 import '../../utils/app_colors.dart';
@@ -18,6 +20,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _attendanceAlerts = true;
   double _attendanceThreshold = 75.0;
   bool _sendingTest = false;
+
+  Future<void> _confirmDeleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+          'This permanently deletes your account and all associated data (attendance, timetables, CGPA). This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await AuthService.instance.deleteAccount();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (_) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
 
   Future<void> _sendTestNotification() async {
     setState(() => _sendingTest = true);
@@ -231,6 +271,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 16),
                 _buildThemePicker(),
+                const SizedBox(height: 30),
+                const Text(
+                  'Account',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF191C1E),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: _confirmDeleteAccount,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: AppTheme.cardDecoration(
+                        color: const Color(0xFFFFCDD2)),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.delete_forever_outlined,
+                            color: Colors.red, size: 22),
+                        SizedBox(width: 12),
+                        Text(
+                          'Delete Account',
+                          style: TextStyle(
+                            fontFamily: 'Public Sans',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 30),
                 const Text(
                   'About',

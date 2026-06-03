@@ -123,10 +123,16 @@ const resolveAttendanceSlot = (
   return { subject, slot };
 };
 
-const getElapsedDateKeys = (startDateKey: string, now: Date): string[] => {
+const getElapsedDateKeys = (
+  startDateKey: string,
+  now: Date,
+  timezoneOffsetMinutes: number = 0
+): string[] => {
   const result: string[] = [];
   const cursor = new Date(`${startDateKey}T00:00:00Z`);
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  // Use local today so records stored with local dateKeys are included
+  const todayKey = dateKeyForInstant(now, timezoneOffsetMinutes);
+  const end = new Date(`${todayKey}T00:00:00Z`);
 
   while (cursor <= end) {
     result.push(cursor.toISOString().slice(0, 10));
@@ -289,7 +295,7 @@ export const getAttendanceSummary = async (req: AuthRequest, res: Response) => {
     const safeTimezoneOffsetMinutes = Number.isNaN(timezoneOffsetMinutes)
       ? 0
       : timezoneOffsetMinutes;
-    const elapsedDateKeys = getElapsedDateKeys(attendanceTrackingStartDate, now);
+    const elapsedDateKeys = getElapsedDateKeys(attendanceTrackingStartDate, now, safeTimezoneOffsetMinutes);
 
     const summary = subjects.map((subject: TimetableSubject) => {
       const explicitBySlot = new Map<string, AttendanceRecord>();
@@ -314,12 +320,12 @@ export const getAttendanceSummary = async (req: AuthRequest, res: Response) => {
 
       for (const dateKey of elapsedDateKeys) {
         const day = dayCodeForDateKey(dateKey);
-        const slots = (subject.classes || []).filter(
-          cls =>
-            cls.day === day &&
-            cls.type !== 'BREAK' &&
-            hasSlotElapsed(dateKey, cls.endTime, now, safeTimezoneOffsetMinutes)
-        );
+        const slots = (subject.classes || []).filter(cls => {
+          if (cls.day !== day || cls.type === 'BREAK') return false;
+          if (hasSlotElapsed(dateKey, cls.endTime, now, safeTimezoneOffsetMinutes)) return true;
+          // Count explicitly marked slots even if class hasn't ended yet
+          return explicitBySlot.has(slotKey(dateKey, subject.id, cls.startTime, cls.endTime));
+        });
 
         for (const slot of slots) {
           const record =

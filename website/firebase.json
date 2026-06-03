@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/app/data/delete",
+        "destination": "/app/data/delete/index.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

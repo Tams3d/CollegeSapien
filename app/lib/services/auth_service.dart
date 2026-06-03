@@ -106,6 +106,11 @@ class AuthService {
     await _auth.currentUser?.sendEmailVerification();
   }
 
+  Future<void> deleteAccount() async {
+    await ApiService.instance.delete('/auth/me');
+    await _auth.signOut();
+  }
+
   Future<UserProfile> onboard({
     required String name,
     required String collegeId,

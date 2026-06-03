@@ -289,3 +289,27 @@ export const updateMe = async (req: AuthRequest, res: Response) => {
     return res.status(400).json({ error: zodError(error) });
   }
 };
+
+export const deleteAccount = async (req: AuthRequest, res: Response) => {
+  try {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+
+    const userRef = firestore().collection('users').doc(uid);
+
+    const subcollections = ['attendance', 'semesters', 'cgpa'];
+    for (const sub of subcollections) {
+      const snap = await userRef.collection(sub).get();
+      const batch = firestore().batch();
+      snap.docs.forEach(doc => batch.delete(doc.ref));
+      if (!snap.empty) await batch.commit();
+    }
+
+    await userRef.delete();
+    await admin.auth().deleteUser(uid);
+
+    return res.status(200).json({ message: 'Account and all associated data deleted.' });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+};
