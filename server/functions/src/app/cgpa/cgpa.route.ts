@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { calculateCGPA, predictExternalMarks } from './cgpa.controller';
+import { calculateCGPA, predictExternalMarks, getSemesters, saveSemesters } from './cgpa.controller';
 import { authenticate, requireVerifiedEmail } from '../../shared/middlewares/auth.middleware';
 
 const router = Router();
@@ -123,5 +123,8 @@ router.post('/calculate', authenticate, requireVerifiedEmail, calculateCGPA);
  *         description: Validation error.
  */
 router.post('/predict', authenticate, requireVerifiedEmail, predictExternalMarks);
+
+router.get('/semesters', authenticate, requireVerifiedEmail, getSemesters);
+router.post('/semesters', authenticate, requireVerifiedEmail, saveSemesters);
 
 export default router;

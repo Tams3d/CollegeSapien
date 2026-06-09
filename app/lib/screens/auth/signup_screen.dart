@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
@@ -281,14 +283,43 @@ class _SignupScreenState extends State<SignupScreen> {
                               : null,
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'I agree to the Terms & Conditions',
-                            style: TextStyle(
-                              fontFamily: 'Public Sans',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontFamily: 'Public Sans',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                              children: [
+                                const TextSpan(text: 'I agree to the '),
+                                TextSpan(
+                                  text: 'Terms of Service',
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () => launchUrl(
+                                          Uri.parse(
+                                              'https://college.codesapiens.in/terms.html'),
+                                          mode: LaunchMode.externalApplication,
+                                        ),
+                                ),
+                                const TextSpan(text: ' and '),
+                                TextSpan(
+                                  text: 'Privacy Policy',
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () => launchUrl(
+                                          Uri.parse(
+                                              'https://college.codesapiens.in/privacy.html'),
+                                          mode: LaunchMode.externalApplication,
+                                        ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

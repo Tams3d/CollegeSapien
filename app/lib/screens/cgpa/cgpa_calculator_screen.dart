@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +7,7 @@ import '../../utils/app_theme.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_constants.dart';
 import '../../services/academic_service.dart';
+import '../../services/api_service.dart';
 
 class _SemesterEntry {
   int semester;
@@ -26,6 +29,14 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
   final _academicService = AcademicService();
   final List<_SemesterEntry> _semesters = [];
 
+  static const _semestersKey = 'cgpa_semesters_v1';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSemesters();
+  }
+
   final List<Color> _semesterColors = [
     AppColors.accentGreen,
     AppColors.accentBlue,
@@ -44,10 +55,67 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
     return _semesters.fold(0.0, (s, e) => s + e.gpa * e.credits) / totalCredits;
   }
 
+  List<_SemesterEntry> _parseSemesterList(List<dynamic> list) {
+    return list.map((item) {
+      final m = item as Map<String, dynamic>;
+      return _SemesterEntry(
+        semester: (m['semester'] as num).toInt(),
+        gpa: (m['gpa'] as num).toDouble(),
+        credits: (m['credits'] as num).toInt(),
+      );
+    }).toList();
+  }
+
+  Future<void> _loadSemesters() async {
+    // Try API first; fall back to local cache.
+    try {
+      final json = await ApiService.instance.get('/cgpa/semesters')
+          as Map<String, dynamic>;
+      final list = json['semesters'] as List<dynamic>? ?? [];
+      final entries = _parseSemesterList(list);
+      if (!mounted) return;
+      setState(() {
+        _semesters
+          ..clear()
+          ..addAll(entries);
+      });
+      // Update local cache
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_semestersKey, jsonEncode(list));
+      return;
+    } catch (_) {}
+
+    // Fallback: local SharedPreferences cache
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_semestersKey);
+      if (raw == null) return;
+      final list = jsonDecode(raw) as List<dynamic>;
+      if (!mounted) return;
+      setState(() {
+        _semesters
+          ..clear()
+          ..addAll(_parseSemesterList(list));
+      });
+    } catch (_) {}
+  }
+
   Future<void> _saveCgpa() async {
-    if (_semesters.isEmpty) return;
+    final list = _semesters
+        .map((e) => {'semester': e.semester, 'gpa': e.gpa, 'credits': e.credits})
+        .toList();
+
+    // Persist locally first (instant, no network)
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('last_cgpa', _computedCgpa.toStringAsFixed(2));
+    await prefs.setString(_semestersKey, jsonEncode(list));
+    if (_semesters.isNotEmpty) {
+      await prefs.setString('last_cgpa', _computedCgpa.toStringAsFixed(2));
+    }
+
+    // Sync to Firebase (fire-and-forget; failures are silent)
+    ApiService.instance
+        .post('/cgpa/semesters', {'semesters': list})
+        .catchError((_) {});
   }
 
   Future<void> _uploadGradeSheet() async {

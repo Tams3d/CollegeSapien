@@ -34,3 +34,16 @@ export const InternalMarksSchema = z.object({
 });
 
 export type InternalMarks = z.infer<typeof InternalMarksSchema>;
+
+export const SemesterEntrySchema = z.object({
+  semester: z.number().int().min(1),
+  gpa: z.number().min(0).max(10),
+  credits: z.number().int().min(1),
+});
+
+export const SemestersSchema = z.object({
+  semesters: z.array(SemesterEntrySchema),
+});
+
+export type SemesterEntry = z.infer<typeof SemesterEntrySchema>;
+export type Semesters = z.infer<typeof SemestersSchema>;

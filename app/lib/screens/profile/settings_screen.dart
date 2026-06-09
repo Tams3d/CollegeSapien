@@ -91,18 +91,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Expanded(
-          child: Text(
-            'Settings',
-            style: TextStyle(
-              fontFamily: 'Lexend Mega',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-              letterSpacing: 0,
-            ),
-            overflow: TextOverflow.ellipsis,
+        title: const Text(
+          'Settings',
+          style: TextStyle(
+            fontFamily: 'Lexend Mega',
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+            letterSpacing: 0,
           ),
+          overflow: TextOverflow.ellipsis,
         ),
       ),
       body: ListenableBuilder(
@@ -248,7 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         max: 90,
                         divisions: 8,
                         activeColor: AppColors.primaryYellow,
-                        inactiveColor: Colors.grey[300],
+                        // inactiveColor: Colors.grey[300],
                         onChanged: (value) {
                           setState(() {
                             _attendanceThreshold = value;

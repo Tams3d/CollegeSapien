@@ -93,11 +93,13 @@ export const syncAuthProfile = async (req: AuthRequest, res: Response) => {
     const updatedDoc = await userRef.get();
     setSessionCookie(req, res);
 
+    const finalData = updatedDoc.data()!;
+    const onboardingRequired = !finalData.collegeId || !finalData.department || !finalData.semester;
     return res.status(200).json({
       message: 'Profile synchronized',
-      onboardingRequired: false,
+      onboardingRequired,
       auth: buildAuthSnapshot(req),
-      user: updatedDoc.data(),
+      user: finalData,
     });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });

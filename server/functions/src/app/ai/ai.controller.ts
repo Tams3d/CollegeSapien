@@ -13,7 +13,7 @@ export const roastResume = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'resumeText, storagePath, or fileBase64 is required' });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
     const prompt = `Roast this student's resume in a funny way. Keep it light-hearted but savage. Use a bit of Tanglish (Tamil + English) for flavor.`;
 
     let result;
@@ -170,7 +170,7 @@ export const memeIt = async (req: AuthRequest, res: Response) => {
     const { content } = req.body;
     if (!content) return res.status(400).json({ error: 'Content is required' });
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-pro-preview' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
     const prompt = `Convert this student's profile or achievement into a funny Tamil Meme description. Be creative. Content: ${content}`;
 
     const result = await model.generateContent(prompt);

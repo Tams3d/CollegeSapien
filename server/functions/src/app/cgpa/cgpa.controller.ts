@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../shared/middlewares/auth.middleware';
-import { InternalMarksSchema } from './cgpa.model';
+import { InternalMarksSchema, SemestersSchema } from './cgpa.model';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as admin from 'firebase-admin';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -77,6 +78,50 @@ export const predictExternalMarks = async (req: AuthRequest, res: Response) => {
           ? 'Impossible to reach this grade with current internals, machi!'
           : `You need ${Math.max(0, marksToGetOutOf100)} out of 100 in external to get ${targetGrade}. Semma target!`,
     });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
+};
+
+export const getSemesters = async (req: AuthRequest, res: Response) => {
+  try {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+
+    const doc = await admin
+      .firestore()
+      .collection('users')
+      .doc(uid)
+      .collection('cgpa')
+      .doc('semesters')
+      .get();
+
+    if (!doc.exists) return res.status(200).json({ semesters: [] });
+    return res.status(200).json(doc.data());
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const saveSemesters = async (req: AuthRequest, res: Response) => {
+  try {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ error: 'Unauthorized' });
+
+    const validated = SemestersSchema.parse(req.body);
+
+    await admin
+      .firestore()
+      .collection('users')
+      .doc(uid)
+      .collection('cgpa')
+      .doc('semesters')
+      .set({
+        ...validated,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+    return res.status(200).json({ message: 'Semesters saved' });
   } catch (error: any) {
     return res.status(400).json({ error: error.message });
   }

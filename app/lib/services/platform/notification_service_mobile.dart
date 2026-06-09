@@ -17,6 +17,7 @@ const _presentAction = 'attendance_present';
 const _absentAction = 'attendance_absent';
 const _otherAction = 'attendance_other';
 const _pendingActionsKey = 'pending_attendance_actions';
+const _testSubjectKey = 'notification_test_subject';
 
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) {
@@ -121,18 +122,30 @@ class AttendanceNotificationService {
       if (!granted) return;
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString(_testSubjectKey);
+    String subjectId = 'test-subject';
+    String subjectCode = 'TEST101';
+    if (cached != null) {
+      try {
+        final m = jsonDecode(cached) as Map<String, dynamic>;
+        subjectId = m['id'] as String? ?? subjectId;
+        subjectCode = m['code'] as String? ?? subjectCode;
+      } catch (_) {}
+    }
+
     final scheduleMode = await _resolveScheduleMode();
     await _plugin.zonedSchedule(
       id: 9999,
-      title: 'Mark CS101 attendance',
-      body: '09:00 - 10:00 · Room 301',
+      title: 'Mark $subjectCode attendance',
+      body: '09:00 - 10:00',
       scheduledDate:
           tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10)),
       notificationDetails: _notificationDetails(),
       androidScheduleMode: scheduleMode,
       payload: jsonEncode({
-        'subjectId': 'test-subject',
-        'subjectCode': 'CS101',
+        'subjectId': subjectId,
+        'subjectCode': subjectCode,
         'dateKey': _dateKey(DateTime.now()),
         'slotStartTime': '09:00',
         'slotEndTime': '10:00',
@@ -162,6 +175,16 @@ class AttendanceNotificationService {
     await initialize();
     await requestPermission();
     await _plugin.cancelAll();
+
+    final firstReal = subjects.firstWhere(
+      (s) => s.classes.any((c) => c.type != 'BREAK'),
+      orElse: () => subjects.isNotEmpty ? subjects.first : TimetableSubject(id: 'test-subject', name: 'Test', code: 'TEST101', classes: []),
+    );
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _testSubjectKey,
+      jsonEncode({'id': firstReal.id, 'code': firstReal.code}),
+    );
 
     final scheduleMode = await _resolveScheduleMode();
     final now = DateTime.now();
