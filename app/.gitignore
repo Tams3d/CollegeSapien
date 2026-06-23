@@ -1,6 +1,8 @@
 # Firebase config (contains secrets)
 ios/Runner/GoogleService-Info.plist
 android/app/google-services.json
+.firebase/
+.firebaserc
 
 # Miscellaneous
 *.class
