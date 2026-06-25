@@ -21,6 +21,7 @@ logs
 .DS_Store
 .fleet
 .idea
+node-compile-cache/
 
 # Local env files
 .env
