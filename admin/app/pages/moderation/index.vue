@@ -22,17 +22,17 @@ interface Resource {
 }
 
 const formatFileSize = (bytes?: number) => {
-  if (!bytes) return '';
+  if (!bytes) return "";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 const fileTypeLabel = (mime?: string) => {
-  if (!mime) return 'File';
-  if (mime === 'application/pdf') return 'PDF';
-  if (mime.startsWith('image/')) return 'Image';
-  return 'File';
+  if (!mime) return "File";
+  if (mime === "application/pdf") return "PDF";
+  if (mime.startsWith("image/")) return "Image";
+  return "File";
 };
 
 const { get, patch, delete: apiDelete } = useApi();
@@ -148,10 +148,12 @@ const archive = async (id: string) => {
             <span
               v-if="resource.aiSpamFlag"
               class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full"
-            >AI: Spam</span>
+              >AI: Spam</span
+            >
             <span
               class="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full"
-            >Pending</span>
+              >Pending</span
+            >
           </div>
         </div>
 
@@ -164,16 +166,26 @@ const archive = async (id: string) => {
           </div>
           <div v-if="resource.subjectName">{{ resource.subjectName }}</div>
           <div>By {{ resource.uploaderName ?? resource.uploadedBy }}</div>
-          <div v-if="resource.fileName || resource.sizeBytes" class="flex items-center gap-1 text-gray-400">
+          <div
+            v-if="resource.fileName || resource.sizeBytes"
+            class="flex items-center gap-1 text-gray-400"
+          >
             <Icon name="i-heroicons-document" class="w-3.5 h-3.5" />
-            <span>{{ resource.fileName ?? fileTypeLabel(resource.mimeType) }}</span>
-            <span v-if="resource.sizeBytes"> · {{ formatFileSize(resource.sizeBytes) }}</span>
+            <span>{{
+              resource.fileName ?? fileTypeLabel(resource.mimeType)
+            }}</span>
+            <span v-if="resource.sizeBytes">
+              · {{ formatFileSize(resource.sizeBytes) }}</span
+            >
           </div>
         </div>
 
         <!-- AI analysis -->
         <div
-          v-if="resource.aiSuggestedCategory && resource.aiSuggestedCategory !== resource.category"
+          v-if="
+            resource.aiSuggestedCategory &&
+            resource.aiSuggestedCategory !== resource.category
+          "
           class="text-xs text-amber-600 mb-3"
         >
           AI suggests: {{ resource.aiSuggestedCategory }} (mismatch)
@@ -185,7 +197,8 @@ const archive = async (id: string) => {
             v-for="kw in resource.keywords"
             :key="kw"
             class="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded"
-          >{{ kw }}</span>
+            >{{ kw }}</span
+          >
         </div>
 
         <!-- Actions -->
@@ -197,7 +210,10 @@ const archive = async (id: string) => {
             rel="noopener noreferrer"
             class="px-3 py-1.5 text-xs font-medium border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1"
           >
-            <Icon name="i-heroicons-arrow-top-right-on-square" class="w-3.5 h-3.5" />
+            <Icon
+              name="i-heroicons-arrow-top-right-on-square"
+              class="w-3.5 h-3.5"
+            />
             Open File
           </a>
           <button
