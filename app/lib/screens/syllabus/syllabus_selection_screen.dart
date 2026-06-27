@@ -106,27 +106,15 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
 
       _regulation = regulation;
 
-      final subjects = _syllabusService.getSubjectsForSemester(
+      // Load elective options from curriculum (for dropdown choices)
+      final optionsMap = <String, List<CurriculumSubject>>{};
+      final curriculumSubjects = _syllabusService.getSubjectsForSemester(
         collegeCode: collegeCode,
         courseCode: courseCode,
         regulation: regulation,
         semester: profile.semester,
       );
-
-      dbg.writeln(
-          'Subjects found: ${subjects.length} for semester ${profile.semester}');
-
-      if (subjects.isEmpty) {
-        setState(() {
-          _debugInfo = dbg.toString();
-          _error = 'No syllabus found';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final optionsMap = <String, List<CurriculumSubject>>{};
-      final optionPools = subjects
+      final optionPools = curriculumSubjects
           .where((s) => s.isSlot && s.optionsFrom != null)
           .map((s) => s.optionsFrom!)
           .toSet();
@@ -139,72 +127,52 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
         );
       }
 
-      // Load saved subjects to pre-populate selections
+      // Check if user already has saved subjects
       List<SavedSubject>? saved;
       try {
         saved = await _syllabusService.getSavedSubjects(profile.semester);
       } catch (_) {}
 
       final entries = <_SubjectEntry>[];
-      for (final s in subjects) {
-        final match = saved?.where((sv) =>
-            (s.isSlot && sv.electiveType == s.electiveType) ||
-            (!s.isSlot && sv.subjectName == s.subjectName)).firstOrNull;
 
-        if (match != null && s.isSlot && s.optionsFrom != null) {
-          final options = optionsMap[s.optionsFrom] ?? [];
-          final selectedOpt = options
-              .where((o) => o.subjectName == match.subjectName)
-              .firstOrNull;
-          entries.add(_SubjectEntry(
-            subject: s,
-            selectedOption: selectedOpt,
-            editedName: selectedOpt == null ? match.subjectName : null,
-            editedCredits:
-                match.credits != s.credits ? match.credits : null,
-          ));
-        } else if (match != null) {
-          entries.add(_SubjectEntry(
-            subject: s,
-            editedName: match.subjectName != s.subjectName
-                ? match.subjectName
-                : null,
-            editedCredits:
-                match.credits != s.credits ? match.credits : null,
-          ));
-        } else {
-          entries.add(_SubjectEntry(subject: s));
-        }
-      }
-
-      // Add any saved subjects that don't match a curriculum entry (manually added)
-      if (saved != null) {
-        final matchedNames = entries
-            .map((e) =>
-                e.selectedOption?.subjectName ??
-                e.editedName ??
-                e.subject.subjectName)
-            .toSet();
+      if (saved != null && saved.isNotEmpty) {
+        // User has saved subjects — show exactly those
         for (final sv in saved) {
-          if (!matchedNames.contains(sv.subjectName)) {
-            entries.add(_SubjectEntry(
-              subject: CurriculumSubject(
-                collegeCode: collegeCode,
-                courseCode: courseCode,
-                regulation: regulation,
-                semester: '${profile.semester}',
-                subjectCode: sv.subjectCode,
-                subjectName: sv.subjectName,
-                courseType: sv.courseType ?? '',
-                ltp: sv.ltp ?? '',
-                credits: sv.credits,
-                tcp: sv.tcp,
-                category: sv.category ?? '',
-                isElective: sv.isElective,
-                electiveType: sv.electiveType,
-              ),
-            ));
-          }
+          final subject = CurriculumSubject(
+            collegeCode: collegeCode,
+            courseCode: courseCode,
+            regulation: regulation,
+            semester: '${profile.semester}',
+            subjectCode: sv.subjectCode,
+            subjectName: sv.subjectName,
+            courseType: sv.courseType ?? '',
+            ltp: sv.ltp ?? '',
+            credits: sv.credits,
+            tcp: sv.tcp,
+            category: sv.category ?? '',
+            isElective: sv.isElective,
+            electiveType: sv.electiveType,
+            recordType: sv.isElective ? 'slot' : 'core',
+            optionsFrom: sv.isElective ? _findOptionsFrom(sv.electiveType, curriculumSubjects) : null,
+          );
+          entries.add(_SubjectEntry(subject: subject));
+        }
+      } else {
+        // First time — load from curriculum
+        dbg.writeln(
+            'Subjects found: ${curriculumSubjects.length} for semester ${profile.semester}');
+
+        if (curriculumSubjects.isEmpty) {
+          setState(() {
+            _debugInfo = dbg.toString();
+            _error = 'No syllabus found';
+            _isLoading = false;
+          });
+          return;
+        }
+
+        for (final s in curriculumSubjects) {
+          entries.add(_SubjectEntry(subject: s));
         }
       }
 
@@ -219,6 +187,14 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  String? _findOptionsFrom(String? electiveType, List<CurriculumSubject> curriculum) {
+    if (electiveType == null) return null;
+    return curriculum
+        .where((s) => s.isSlot && s.electiveType == electiveType)
+        .map((s) => s.optionsFrom)
+        .firstOrNull;
   }
 
   Future<void> _save() async {
