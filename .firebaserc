@@ -5,13 +5,17 @@
   "targets": {
     "collegesapiens": {
       "hosting": {
-        "app": [
+        "app1": [
           "collegesapiens"
         ],
         "admin": [
           "admin-collegesapiens"
+        ],
+        "app2": [
+          "codesapiens"
         ]
       }
     }
-  }
+  },
+  "etags": {}
 }

@@ -12,9 +12,12 @@ import '../../models/timetable_models.dart';
 import '../../services/attendance_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/cache_service.dart';
+import '../../services/college_service.dart';
 import '../../services/timetable_service.dart';
+import '../profile/profile_screen.dart';
 import '../../models/syllabus_models.dart';
 import '../../services/syllabus_service.dart';
+import '../../utils/department_constants.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 import '../attendance/mark_attendance_screen.dart';
@@ -125,6 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _semester = 0;
   final Set<String> _markedSlots = {};
   List<SavedSubject> _savedSubjects = [];
+  bool _showingCurriculumFallback = false;
 
   static String get _todayMarkedKey =>
       'marked_slots_${_dateKey(DateTime.now())}';
@@ -178,17 +182,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
+    final profileFuture = _loadProfile();
     await Future.wait([
       _loadAttendance(),
       _loadTimetable(),
       _loadEvents(),
-      _loadSemester(),
+      profileFuture,
       _loadMarkedSlots(),
-      _loadSyllabus(),
     ]);
   }
 
-  Future<void> _loadSemester() async {
+  Future<void> _loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final cached = prefs.getInt('last_semester') ?? 0;
     if (mounted && cached > 0) setState(() => _semester = cached);
@@ -199,17 +203,57 @@ class _HomeScreenState extends State<HomeScreen> {
       await prefs.setInt('last_semester', user.semester);
       await prefs.setString('last_college_name', user.collegeName ?? '');
       if (mounted) setState(() => _semester = user.semester);
-    } catch (_) {}
-  }
 
-  Future<void> _loadSyllabus() async {
-    try {
-      final result = await AuthService.instance.syncProfile();
-      final semester = result.user?.semester ?? 0;
-      if (semester <= 0) return;
-      final saved = await SyllabusService().getSavedSubjects(semester);
+      final syllabusService = SyllabusService();
+      final saved = await syllabusService.getSavedSubjects(user.semester);
       if (mounted && saved != null) {
-        setState(() => _savedSubjects = saved);
+        setState(() {
+          _savedSubjects = saved;
+          _showingCurriculumFallback = false;
+        });
+      } else if (mounted) {
+        // No saved subjects — try curriculum fallback
+        try {
+          final colleges = await CollegeService().listColleges();
+          final college =
+              colleges.where((c) => c.id == user.collegeId).firstOrNull;
+          final collegeCode = college?.code;
+          final deptObj =
+              departments.where((d) => d.name == user.department).firstOrNull;
+          final courseCode = deptObj?.code;
+          if (collegeCode != null && courseCode != null) {
+            final regulation = syllabusService.getLatestRegulation(
+              collegeCode: collegeCode,
+              courseCode: courseCode,
+            );
+            if (regulation != null) {
+              final subjects = syllabusService.getSubjectsForSemester(
+                collegeCode: collegeCode,
+                courseCode: courseCode,
+                regulation: regulation,
+                semester: user.semester,
+              );
+              if (subjects.isNotEmpty && mounted) {
+                setState(() {
+                  _savedSubjects = subjects
+                      .map((s) => SavedSubject(
+                            subjectCode: s.subjectCode,
+                            subjectName: s.subjectName,
+                            credits: s.credits,
+                            isElective: s.isElective,
+                            electiveType: s.electiveType,
+                            courseType: s.courseType,
+                            ltp: s.ltp,
+                            tcp: s.tcp,
+                            category: s.category,
+                          ))
+                      .toList();
+                  _showingCurriculumFallback = true;
+                });
+              }
+            }
+          }
+        } catch (_) {}
       }
     } catch (_) {}
   }
@@ -410,7 +454,9 @@ class _HomeScreenState extends State<HomeScreen> {
               if (_savedSubjects.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 _sectionHeader(
-                  "Your Subjects",
+                  _showingCurriculumFallback
+                      ? "Semester Subjects"
+                      : "Your Subjects",
                   onShowAll: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -418,6 +464,43 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                if (_showingCurriculumFallback)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SyllabusSelectionScreen()),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentBlue.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: Colors.black.withValues(alpha: 0.2)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 16),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'These are default subjects for your semester. Tap to update with your electives.',
+                                style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 _syllabusCarousel(),
               ],
               const SizedBox(height: 24),
@@ -466,7 +549,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         GestureDetector(
-          onTap: () => widget.onTabSwitch?.call(4),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          ),
           child: Container(
             width: 42,
             height: 42,

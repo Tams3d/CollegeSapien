@@ -1,7 +1,7 @@
 {
   "hosting": [
     {
-      "target": "app",
+      "target": "app1",
       "public": "app/build/web",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
@@ -12,13 +12,13 @@
       ]
     },
     {
-      "target": "admin",
-      "public": "admin/.output/public",
+      "target": "app2",
+      "public": "website/public",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
           "source": "**",
-          "destination": "/200.html"
+          "destination": "/index.html"
         }
       ]
     }

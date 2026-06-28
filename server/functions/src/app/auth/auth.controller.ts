@@ -277,14 +277,23 @@ export const updateMe = async (req: AuthRequest, res: Response) => {
     if (!uid) return res.status(401).json({ error: 'Unauthorized' });
 
     const validatedData = ProfileUpdateSchema.parse(req.body);
+    const patch: Record<string, unknown> = {
+      ...validatedData,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (validatedData.collegeId) {
+      const college = await findCollege({ collegeId: validatedData.collegeId });
+      if (!college) {
+        return res.status(400).json({ error: 'College not found' });
+      }
+      patch.collegeName = college.data.name;
+    }
 
     await firestore()
       .collection('users')
       .doc(uid)
-      .update({
-        ...validatedData,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      .update(patch);
 
     return res.status(200).json({ message: 'Profile updated' });
   } catch (error: any) {

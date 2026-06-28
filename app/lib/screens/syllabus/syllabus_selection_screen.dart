@@ -138,6 +138,7 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
       if (saved != null && saved.isNotEmpty) {
         // User has saved subjects — show exactly those
         for (final sv in saved) {
+          final optFrom = sv.isElective ? _findOptionsFrom(sv.electiveType, curriculumSubjects) : null;
           final subject = CurriculumSubject(
             collegeCode: collegeCode,
             courseCode: courseCode,
@@ -153,9 +154,14 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
             isElective: sv.isElective,
             electiveType: sv.electiveType,
             recordType: sv.isElective ? 'slot' : 'core',
-            optionsFrom: sv.isElective ? _findOptionsFrom(sv.electiveType, curriculumSubjects) : null,
+            optionsFrom: optFrom,
           );
-          entries.add(_SubjectEntry(subject: subject));
+          CurriculumSubject? matchedOption;
+          if (sv.isElective && optFrom != null) {
+            final pool = optionsMap[optFrom] ?? [];
+            matchedOption = pool.where((o) => o.subjectName == sv.subjectName).firstOrNull;
+          }
+          entries.add(_SubjectEntry(subject: subject, selectedOption: matchedOption));
         }
       } else {
         // First time — load from curriculum
@@ -779,61 +785,123 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
 
   Widget _buildElectiveDropdown(_SubjectEntry entry, int index) {
     final options = _electiveOptions[entry.subject.optionsFrom] ?? [];
-    final streams = options.map((o) => o.electiveStream).toSet().toList()
-      ..sort();
+    final currentValue = entry.selectedOption?.subjectName ??
+        entry.editedName ??
+        (entry.subject.isElective ? entry.subject.subjectName : '');
+    final initialValue = currentValue.isNotEmpty ? currentValue : '';
 
-    return DropdownButtonFormField<String>(
-      initialValue: entry.selectedOption?.subjectName,
-      isExpanded: true,
-      decoration: InputDecoration(
-        isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Colors.black, width: 1.5),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Colors.black, width: 1.5),
-        ),
-        filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.7),
-        hintText: 'Select a subject',
-        hintStyle: const TextStyle(
-          fontFamily: 'Public Sans',
-          fontSize: 13,
-          color: Colors.black54,
-        ),
-      ),
-      style: const TextStyle(
-        fontFamily: 'Public Sans',
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
-      items: streams.map((stream) {
-        final streamOptions =
-            options.where((o) => o.electiveStream == stream).toList();
-        return streamOptions.map((opt) {
-          return DropdownMenuItem<String>(
-            value: opt.subjectName,
-            child: Text(
-              '${opt.subjectName}  (${opt.electiveStream})',
-              overflow: TextOverflow.ellipsis,
-            ),
-          );
-        });
-      }).expand((items) => items).toList(),
-      onChanged: (value) {
-        if (value == null) return;
-        final selected = options.firstWhere((o) => o.subjectName == value);
+    return Autocomplete<CurriculumSubject>(
+      initialValue: TextEditingValue(text: initialValue),
+      displayStringForOption: (opt) =>
+          '${opt.subjectName}${opt.electiveStream != null ? '  (${opt.electiveStream})' : ''}',
+      optionsBuilder: (textEditingValue) {
+        final query = textEditingValue.text.toLowerCase();
+        if (query.isEmpty) return options;
+        return options.where((o) =>
+            o.subjectName.toLowerCase().contains(query) ||
+            (o.electiveStream?.toLowerCase().contains(query) ?? false));
+      },
+      onSelected: (selected) {
         setState(() {
           _entries[index] = _SubjectEntry(
             subject: entry.subject,
             selectedOption: selected,
           );
         });
+      },
+      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+        void commitTypedValue() {
+          final typed = controller.text.trim();
+          final match = options.where((o) => o.subjectName == typed).firstOrNull;
+          if (match != null) {
+            setState(() {
+              _entries[index] = _SubjectEntry(
+                subject: entry.subject,
+                selectedOption: match,
+              );
+            });
+          } else if (typed.isNotEmpty && typed != initialValue) {
+            setState(() {
+              _entries[index] = _SubjectEntry(
+                subject: entry.subject,
+                editedName: typed,
+              );
+            });
+          }
+        }
+        return Focus(
+          onFocusChange: (hasFocus) {
+            if (!hasFocus) commitTypedValue();
+          },
+          child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          style: const TextStyle(
+            fontFamily: 'Public Sans',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(6),
+              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            ),
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.7),
+            hintText: 'Type or select a subject',
+            hintStyle: const TextStyle(
+              fontFamily: 'Public Sans',
+              fontSize: 13,
+              color: Colors.black54,
+            ),
+            suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
+          ),
+        ),
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(6),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, i) {
+                  final opt = options.elementAt(i);
+                  return InkWell(
+                    onTap: () => onSelected(opt),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      child: Text(
+                        '${opt.subjectName}${opt.electiveStream != null ? '  (${opt.electiveStream})' : ''}',
+                        style: const TextStyle(
+                          fontFamily: 'Public Sans',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
       },
     );
   }

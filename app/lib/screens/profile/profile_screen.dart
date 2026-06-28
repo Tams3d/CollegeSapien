@@ -6,9 +6,13 @@ import '../../services/attendance_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
+import '../../services/syllabus_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../attendance_screen.dart';
 import '../auth/login_screen.dart';
+import '../resources/resources_hub_screen.dart';
+import '../syllabus/syllabus_selection_screen.dart';
 import 'about_screen.dart';
 // import 'admin_management_screen.dart'; // mod: moved to web admin panel
 import 'edit_profile_screen.dart';
@@ -32,8 +36,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _attendanceStat = '--';
   String _cgpaStat = '--';
   String _semesterStat = '--';
+  int? _subjectCount;
+  int? _totalCredits;
   String _filesUploaded = '--';
   String? _collegeName;
+  String? _department;
   // mod: _showAdminManagement removed — admin management moved to web admin panel
   // bool _showAdminManagement = false;
 
@@ -118,8 +125,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           } catch (_) {}
           if (mounted) setState(() => _semesterStat = semText);
         }
-        if (profile.collegeName != null && mounted) {
-          setState(() => _collegeName = profile.collegeName);
+        if (mounted) {
+          setState(() {
+            if (profile.collegeName != null) _collegeName = profile.collegeName;
+            if (profile.department != null) _department = profile.department;
+          });
+        }
+
+        if (profile.semester > 0) {
+          try {
+            final saved = await SyllabusService().getSavedSubjects(profile.semester);
+            if (saved != null && saved.isNotEmpty && mounted) {
+              final credits = saved.fold<int>(0, (sum, s) => sum + (s.credits ?? 0));
+              setState(() {
+                _subjectCount = saved.length;
+                _totalCredits = credits > 0 ? credits : null;
+              });
+            }
+          } catch (_) {}
         }
       }
     } catch (_) {}
@@ -167,67 +190,205 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: SingleChildScrollView(
           padding: EdgeInsets.all(screenWidth * 0.045),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 8),
+
+              // Back button + title
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: AppTheme.cardDecoration(
+                        color: Colors.white,
+                        shadowOffset: const Offset(2, 2),
+                      ),
+                      child: const Icon(
+                        Icons.chevron_left,
+                        size: 28,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  const Text(
+                    'Profile',
+                    style: TextStyle(
+                      fontFamily: 'Lexend Mega',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
 
-              // Profile Picture
+              // Profile card
               Container(
-                width: 120,
-                height: 120,
+                width: double.infinity,
                 decoration: AppTheme.cardDecoration(
                   color: AppColors.primaryYellow,
-                  shadowOffset: const Offset(6, 6),
                 ),
-                child: const Icon(
-                  Icons.person,
-                  size: 60,
-                  color: Colors.black,
-                ),
+                child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.black, width: 2),
+                                color: Colors.grey[300],
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: user?.photoURL != null
+                                  ? Image.network(
+                                      user!.photoURL!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.person,
+                                        size: 40,
+                                        color: Colors.black54,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.person,
+                                      size: 40,
+                                      color: Colors.black54,
+                                    ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    user?.displayName?.isNotEmpty == true
+                                        ? user!.displayName!
+                                        : 'Student',
+                                    style: const TextStyle(
+                                      fontFamily: 'Lexend Mega',
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.email_outlined, size: 14, color: Colors.black.withValues(alpha: 0.6)),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          user?.email ?? '',
+                                          style: TextStyle(
+                                            fontFamily: 'Public Sans',
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black.withValues(alpha: 0.7),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (_department != null) ...[
+                                    const SizedBox(height: 10),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        _department!.toUpperCase(),
+                                        style: TextStyle(
+                                          fontFamily: 'Lexend Mega',
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primaryYellow,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_collegeName != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(6),
+                              bottomRight: Radius.circular(6),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'INSTITUTION',
+                                style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black.withValues(alpha: 0.45),
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Icon(Icons.home_outlined, size: 18, color: Colors.black.withValues(alpha: 0.6)),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      _collegeName!,
+                                      style: const TextStyle(
+                                        fontFamily: 'Public Sans',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
               ),
               const SizedBox(height: 20),
-
-              // Name
-              Text(
-                user?.displayName?.isNotEmpty == true
-                    ? user!.displayName!
-                    : 'Student',
-                style: const TextStyle(
-                  fontFamily: 'Lexend Mega',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                user?.email ?? '',
-                style: TextStyle(
-                  fontFamily: 'Public Sans',
-                  fontSize: 14,
-                  color: Colors.black.withValues(alpha: 0.7),
-                ),
-              ),
-              if (_collegeName != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  _collegeName!,
-                  style: TextStyle(
-                    fontFamily: 'Public Sans',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black.withValues(alpha: 0.6),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-              const SizedBox(height: 30),
 
               // Stats — 2×2 grid
               Row(
                 children: [
                   Expanded(
                     child: _buildStatCard(
-                        'Attendance', _attendanceStat, AppColors.accentGreen),
+                      'Attendance',
+                      _attendanceStat,
+                      AppColors.accentGreen,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const AttendanceScreen()),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -249,13 +410,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCard(
-                        'Semester', _semesterStat, AppColors.primaryYellow),
+                    child: _buildSemesterCard(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SyllabusSelectionScreen()),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _buildStatCard('Files Uploaded', _filesUploaded,
-                        AppColors.accentPurple),
+                    child: _buildStatCard(
+                      'Files Uploaded',
+                      _filesUploaded,
+                      AppColors.accentPurple,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ResourcesHubScreen()),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -356,6 +530,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+
+  Widget _buildSemesterCard({VoidCallback? onTap}) {
+    final parts = <String>[];
+    if (_subjectCount != null) parts.add('$_subjectCount subjects');
+    if (_totalCredits != null) parts.add('$_totalCredits credits');
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+      padding: const EdgeInsets.all(20),
+      decoration: AppTheme.cardDecoration(color: AppColors.primaryYellow),
+      child: Column(
+        children: [
+          Text(
+            _semesterStat,
+            style: const TextStyle(
+              fontFamily: 'Lexend Mega',
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Semester',
+            style: TextStyle(
+              fontFamily: 'Public Sans',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          if (parts.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              parts.join('  •  '),
+              style: TextStyle(
+                fontFamily: 'Public Sans',
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: Colors.black.withValues(alpha: 0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    ),
+    );
+  }
+
   Widget _buildStatCard(
     String label,
     String value,
@@ -372,18 +597,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             if (isEmpty) ...[
-              const Icon(Icons.calculate_outlined,
-                  size: 26, color: Colors.black),
-              const SizedBox(height: 6),
-              Text(
-                emptyHint,
-                style: const TextStyle(
-                  fontFamily: 'Public Sans',
-                  fontSize: 11,
+              const Text(
+                '--',
+                style: TextStyle(
+                  fontFamily: 'Lexend Mega',
+                  fontSize: 28,
                   fontWeight: FontWeight.w700,
                   color: Colors.black,
                 ),
-                textAlign: TextAlign.center,
               ),
             ] else
               Text(
@@ -444,3 +665,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

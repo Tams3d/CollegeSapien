@@ -9,7 +9,6 @@ import 'home_screen.dart';
 import '../attendance_screen.dart';
 import '../timetable_list_screen.dart';
 import '../resources/resources_hub_screen.dart';
-import '../profile/profile_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -24,13 +23,13 @@ class _MainNavigationState extends State<MainNavigation>
   int _attendanceRefreshToken = 0;
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fade;
+  late final Widget _homeScreen;
 
   static const _navItems = [
     (icon: Icons.home_outlined, label: 'Home'),
     (icon: Icons.check_circle_outline, label: 'Attendance'),
     (icon: Icons.calendar_today_outlined, label: 'Timetable'),
     (icon: Icons.library_books_outlined, label: 'Resources'),
-    (icon: Icons.person_outline, label: 'Profile'),
   ];
 
   @override
@@ -42,6 +41,7 @@ class _MainNavigationState extends State<MainNavigation>
     );
     _fade = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut);
     _fadeCtrl.forward();
+    _homeScreen = HomeScreen(onTabSwitch: _onTab);
 
     _prepareAttendanceNotifications();
   }
@@ -91,12 +91,11 @@ class _MainNavigationState extends State<MainNavigation>
 
   Widget _screenForIndex(int index) {
     return switch (index) {
-      0 => HomeScreen(onTabSwitch: _onTab),
+      0 => _homeScreen,
       1 => AttendanceScreen(refreshToken: _attendanceRefreshToken),
       2 => const TimetableListScreen(),
       3 => const ResourcesHubScreen(),
-      4 => const ProfileScreen(),
-      _ => HomeScreen(onTabSwitch: _onTab),
+      _ => _homeScreen,
     };
   }
 
