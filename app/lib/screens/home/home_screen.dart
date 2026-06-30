@@ -129,6 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final Set<String> _markedSlots = {};
   List<SavedSubject> _savedSubjects = [];
   bool _showingCurriculumFallback = false;
+  String _userName = '';
 
   static String get _todayMarkedKey =>
       'marked_slots_${_dateKey(DateTime.now())}';
@@ -202,7 +203,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (user == null || !mounted) return;
       await prefs.setInt('last_semester', user.semester);
       await prefs.setString('last_college_name', user.collegeName ?? '');
-      if (mounted) setState(() => _semester = user.semester);
+      if (mounted) setState(() {
+        _semester = user.semester;
+        _userName = user.name;
+      });
 
       final syllabusService = SyllabusService();
       final saved = await syllabusService.getSavedSubjects(user.semester);
@@ -564,10 +568,10 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 4),
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
-                'Codesapiens',
-                style: TextStyle(
+                _userName.isEmpty ? 'Hi there' : 'Hi ${_userName.split(' ').first}',
+                style: const TextStyle(
                   fontFamily: 'Lexend Mega',
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
