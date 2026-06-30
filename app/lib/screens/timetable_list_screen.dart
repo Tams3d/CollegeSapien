@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/timetable_models.dart';
 import '../services/cache_service.dart';
 import '../services/timetable_service.dart';
@@ -16,7 +15,6 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
   final TimetableService _timetableService = TimetableService();
   List<TimetableSubject> _subjects = [];
   bool _isLoading = true;
-  bool _isScanning = false;
 
   @override
   void initState() {
@@ -44,131 +42,6 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading subjects: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _scanTimetable() async {
-    // Show dialog to choose camera, gallery, or manual entry
-    final result = await showDialog<dynamic>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFFFFF8E4),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: Colors.black, width: 2),
-        ),
-        title: const Text(
-          'Add Timetable',
-          style: TextStyle(
-            fontFamily: 'Lexend Mega',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildSourceButton(
-              icon: Icons.camera_alt,
-              label: 'Take Photo',
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            const SizedBox(height: 12),
-            _buildSourceButton(
-              icon: Icons.photo_library,
-              label: 'Choose from Gallery',
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-            const SizedBox(height: 12),
-            _buildSourceButton(
-              icon: Icons.edit_note,
-              label: 'Enter Manually',
-              onTap: () => Navigator.pop(context, 'manual'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (result == null) return;
-
-    if (result == 'manual') {
-      await _showSubjectSheet();
-      return;
-    }
-
-    final ImageSource source = result as ImageSource;
-
-    if (!mounted) return;
-
-    setState(() => _isScanning = true);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text('Pangaali, let me cook a min... 🍳'),
-            ),
-          ],
-        ),
-        duration: Duration(minutes: 3),
-        backgroundColor: Colors.black,
-      ),
-    );
-
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: source,
-        imageQuality: 70,
-        maxWidth: 1500,
-        maxHeight: 1500,
-      );
-
-      if (image == null) {
-        setState(() => _isScanning = false);
-        if (mounted) ScaffoldMessenger.of(context).clearSnackBars();
-        return;
-      }
-
-      final bytes = await image.readAsBytes();
-      await _timetableService.scanTimetableImage(bytes);
-      final subjects = await _timetableService.getAllSubjects();
-
-      setState(() {
-        _subjects = subjects;
-        _isScanning = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Timetable cooked! ✅'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isScanning = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error scanning timetable: $e')),
         );
       }
     }
@@ -543,45 +416,6 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
     }
   }
 
-  Widget _buildSourceButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFD966),
-          border: Border.all(color: Colors.black, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: const [
-            BoxShadow(
-              offset: Offset(2, 2),
-              color: Colors.black,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 24, color: Colors.black),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Public Sans',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _openTimetableDetail(TimetableSubject subject) {
     Navigator.push(
       context,
@@ -641,11 +475,11 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
               ],
             ),
 
-            // Floating Action Button for scanning
+            // Floating Action Button for adding a subject manually
             Positioned(
               right: 20,
               bottom: 20,
-              child: _buildScanButton(),
+              child: _buildAddButton(),
             ),
           ],
         ),
@@ -789,7 +623,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tap the camera button to scan a timetable',
+            'Tap the + button to add a subject',
             style: TextStyle(
               fontFamily: 'Public Sans',
               fontSize: 14,
@@ -801,7 +635,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
     );
   }
 
-  Widget _buildScanButton() {
+  Widget _buildAddButton() {
     return Container(
       width: 60,
       height: 60,
@@ -819,10 +653,10 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _isScanning ? null : _scanTimetable,
+          onTap: () => _showSubjectSheet(),
           customBorder: const CircleBorder(),
           child: const Icon(
-            Icons.camera_alt,
+            Icons.add,
             size: 28,
             color: Colors.black,
           ),

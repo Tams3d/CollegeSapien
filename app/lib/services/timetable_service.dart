@@ -1,29 +1,8 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import '../models/timetable_models.dart';
 import 'attendance_notification_service.dart';
 import 'api_service.dart';
 
 class TimetableService {
-  Future<TimetableSubject> scanTimetableImage(Uint8List bytes) async {
-    final json = await ApiService.instance.post('/timetable/parse', {
-      'imageBase64': base64Encode(bytes),
-    }) as Map<String, dynamic>;
-
-    final subjectsJson = json['subjects'] as List<dynamic>? ?? [];
-    if (subjectsJson.isEmpty) {
-      throw ApiException(
-          422, 'Could not extract subjects from this timetable.');
-    }
-
-    final subjects = subjectsJson
-        .map((item) => TimetableSubject.fromJson(item as Map<String, dynamic>))
-        .toList();
-    await saveSubjects(subjects);
-    return subjects.first;
-  }
-
   static Future<TimetableData>? _timetableFuture;
 
   Future<List<TimetableSubject>> getAllSubjects() async {

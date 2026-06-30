@@ -119,12 +119,10 @@ class AboutScreen extends StatelessWidget {
                 'Features',
                 AppColors.accentBlue,
                 [
-                  'Timetable scanning with AI',
                   'Attendance tracking per subject',
                   'CGPA calculator with credits',
                   'Notes & Question Paper hub',
                   'Pomodoro timer with tasks',
-                  'Resume Roast AI feedback',
                 ],
               ),
               const SizedBox(height: 16),

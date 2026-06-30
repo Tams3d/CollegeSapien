@@ -9,7 +9,7 @@ class HelpScreen extends StatelessWidget {
   static const _faqs = [
     (
       q: 'How do I add a timetable?',
-      a: 'Tap the camera icon on the Timetable screen. You can scan a photo of your printed timetable or choose an image from your gallery. You can also enter subjects manually.',
+      a: 'Tap the + button on the Timetable screen and enter your subjects manually.',
     ),
     (
       q: 'How is attendance calculated?',

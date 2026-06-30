@@ -101,6 +101,8 @@ const codeFromName = (name: string): string => {
 };
 
 export const parseTimetable = async (req: AuthRequest, res: Response) => {
+  return res.status(503).json({ error: 'Timetable image scanning is temporarily unavailable.' });
+
   try {
     const { imageBase64 } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'Image data is required' });
@@ -127,7 +129,7 @@ export const parseTimetable = async (req: AuthRequest, res: Response) => {
       return res.status(200).json({ error: 'Could not parse JSON', raw: text });
     }
 
-    const resultJson = JSON.parse(jsonMatch[0]);
+    const resultJson = JSON.parse(jsonMatch![0]);
 
     // Normalize subjects so missing code/id/room never reach the Flutter app as null
     if (Array.isArray(resultJson.subjects)) {
