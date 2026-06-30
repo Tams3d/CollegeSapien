@@ -3,7 +3,7 @@ import '../models/api_models.dart';
 import '../models/timetable_models.dart';
 import '../models/syllabus_models.dart';
 import '../models/cached_data.dart';
-import '../screens/home/home_screen.dart';
+import '../models/event_models.dart';
 
 class AppStateNotifier extends ChangeNotifier {
   CachedData<List<AttendanceSummary>>? _attendanceSummary;
