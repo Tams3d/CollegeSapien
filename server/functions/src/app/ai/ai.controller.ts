@@ -6,7 +6,15 @@ import * as admin from 'firebase-admin';
 // API Key should be set in Firebase Config or env
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+const ROAST_RESUME_DISABLED = true;
+
 export const roastResume = async (req: AuthRequest, res: Response) => {
+  if (ROAST_RESUME_DISABLED) {
+    return res
+      .status(503)
+      .json({ error: 'Resume roast is temporarily disabled. Please try again later.' });
+  }
+
   try {
     const { resumeText, storagePath, mimeType, fileBase64 } = req.body;
     if (!resumeText && !storagePath && !fileBase64) {
