@@ -21,7 +21,7 @@ dependencies:
   http: ^1.1.2
 
   # State Management
-  provider: ^6.4.0
+  provider: ^6.1.5+1
 
   # Google Sign In
   google_sign_in: ^7.2.0
