@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../utils/app_colors.dart';
-import 'home_screen.dart' show EventItem;
+import '../../models/event_models.dart';
 
 class EventsAllScreen extends StatelessWidget {
   final List<EventItem> events;
