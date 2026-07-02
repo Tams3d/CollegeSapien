@@ -7,6 +7,8 @@ import * as admin from 'firebase-admin';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export const calculateCGPA = async (req: AuthRequest, res: Response) => {
+  return res.status(503).json({ error: 'CGPA image scanning is temporarily unavailable.' });
+
   try {
     const { imageBase64 } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'Image data is required' });
@@ -29,7 +31,7 @@ export const calculateCGPA = async (req: AuthRequest, res: Response) => {
     const text = response.text();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const resultJson = jsonMatch
-      ? JSON.parse(jsonMatch[0])
+      ? JSON.parse(jsonMatch![0])
       : { error: 'Could not parse JSON', raw: text };
 
     return res.status(200).json(resultJson);

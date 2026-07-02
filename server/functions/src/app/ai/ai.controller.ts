@@ -168,6 +168,8 @@ function parseAnalysisResponse(text: string): ResourceAnalysis {
 }
 
 export const memeIt = async (req: AuthRequest, res: Response) => {
+  return res.status(503).json({ error: 'Meme generation is temporarily unavailable.' });
+
   try {
     const { content } = req.body;
     if (!content) return res.status(400).json({ error: 'Content is required' });
