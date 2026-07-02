@@ -52,19 +52,27 @@ class SyllabusService {
         .toList();
   }
 
-  Future<List<SavedSubject>?> getSavedSubjects(int semester) async {
+  Future<SavedSyllabus?> getSavedSyllabus(int semester) async {
     try {
       final json = await ApiService.instance
           .get('/syllabus/subjects/$semester') as Map<String, dynamic>;
       final subjects = json['subjects'] as List<dynamic>?;
       if (subjects == null || subjects.isEmpty) return null;
-      return subjects
-          .map((s) => SavedSubject.fromJson(s as Map<String, dynamic>))
-          .toList();
+      return SavedSyllabus(
+        regulation: json['regulation'] as String?,
+        subjects: subjects
+            .map((s) => SavedSubject.fromJson(s as Map<String, dynamic>))
+            .toList(),
+      );
     } on ApiException catch (e) {
       if (e.statusCode == 404) return null;
       rethrow;
     }
+  }
+
+  Future<List<SavedSubject>?> getSavedSubjects(int semester) async {
+    final saved = await getSavedSyllabus(semester);
+    return saved?.subjects;
   }
 
   Future<void> saveSubjects({

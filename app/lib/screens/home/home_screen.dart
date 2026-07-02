@@ -220,12 +220,16 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       final syllabusService = SyllabusService();
-      final saved = await syllabusService.getSavedSubjects(user.semester);
+      List<SavedSubject>? saved;
+      try {
+        saved = await syllabusService.getSavedSubjects(user.semester);
+      } catch (_) {}
       if (mounted && saved != null) {
+        final savedSubjects = saved;
         final appState = Provider.of<AppStateNotifier>(context, listen: false);
-        appState.setSavedSubjects(saved);
+        appState.setSavedSubjects(savedSubjects);
         setState(() {
-          _savedSubjects = saved;
+          _savedSubjects = savedSubjects;
           _showingCurriculumFallback = false;
         });
       } else if (mounted) {
