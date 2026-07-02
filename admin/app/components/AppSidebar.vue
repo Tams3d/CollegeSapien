@@ -6,6 +6,7 @@ const nav = [
   { label: "Users", to: "/users", icon: "i-heroicons-users" },
   { label: "Colleges", to: "/colleges", icon: "i-heroicons-building-library" },
   { label: "Resources", to: "/resources", icon: "i-heroicons-document-text" },
+  { label: "Syllabus", to: "/syllabus", icon: "i-heroicons-book-open" },
   { label: "Moderation", to: "/moderation", icon: "i-heroicons-shield-check" },
   { label: "Reports", to: "/reports", icon: "i-heroicons-flag" },
   {

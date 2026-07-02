@@ -88,14 +88,13 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
         return;
       }
 
-      final regulation = _syllabusService.getLatestRegulation(
-        collegeCode: collegeCode,
-        courseCode: courseCode,
-      );
-
-      dbg.writeln('Regulation: $collegeCode + $courseCode => $regulation');
-
-      if (regulation == null) {
+      CurriculumBundle bundle;
+      try {
+        bundle = await _syllabusService.getCurriculum(
+          collegeCode: collegeCode,
+          courseCode: courseCode,
+        );
+      } catch (_) {
         dbg.writeln('STOPPED: no regulation found');
         setState(() {
           _debugInfo = dbg.toString();
@@ -105,14 +104,15 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
         return;
       }
 
+      final regulation = bundle.regulation;
+      dbg.writeln('Regulation: $collegeCode + $courseCode => $regulation');
+
       _regulation = regulation;
 
       // Load elective options from curriculum (for dropdown choices)
       final optionsMap = <String, List<CurriculumSubject>>{};
       final curriculumSubjects = _syllabusService.getSubjectsForSemester(
-        collegeCode: collegeCode,
-        courseCode: courseCode,
-        regulation: regulation,
+        bundle,
         semester: profile.semester,
       );
       final optionPools = curriculumSubjects
@@ -121,9 +121,7 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
           .toSet();
       for (final pool in optionPools) {
         optionsMap[pool] = _syllabusService.getElectiveOptions(
-          collegeCode: collegeCode,
-          courseCode: courseCode,
-          regulation: regulation,
+          bundle,
           electiveType: pool,
         );
       }

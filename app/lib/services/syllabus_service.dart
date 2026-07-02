@@ -1,55 +1,55 @@
-import '../data/curriculum_data.dart';
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/syllabus_models.dart';
 import 'api_service.dart';
 
 class SyllabusService {
-  List<CurriculumSubject> getSubjectsForSemester({
+  Future<CurriculumBundle> getCurriculum({
     required String collegeCode,
     required String courseCode,
-    required String regulation,
+    String? regulation,
+  }) async {
+    final cacheKey =
+        'curriculum_${collegeCode}_${courseCode}_${regulation ?? 'latest'}';
+    final prefs = await SharedPreferences.getInstance();
+
+    try {
+      final query = StringBuffer(
+          '/curriculum?collegeCode=$collegeCode&courseCode=$courseCode');
+      if (regulation != null) query.write('&regulation=$regulation');
+
+      final json =
+          await ApiService.instance.get(query.toString()) as Map<String, dynamic>;
+      await prefs.setString(cacheKey, jsonEncode(json));
+      return CurriculumBundle.fromJson(json);
+    } catch (e) {
+      final cached = prefs.getString(cacheKey);
+      if (cached != null) {
+        return CurriculumBundle.fromJson(
+            jsonDecode(cached) as Map<String, dynamic>);
+      }
+      rethrow;
+    }
+  }
+
+  List<CurriculumSubject> getSubjectsForSemester(
+    CurriculumBundle bundle, {
     required int semester,
   }) {
-    return curriculumData
-        .map((json) => CurriculumSubject.fromJson(json))
-        .where((s) =>
-            s.collegeCode == collegeCode &&
-            s.courseCode == courseCode &&
-            s.regulation == regulation &&
-            s.effectiveSemester == semester &&
-            !s.isOption)
+    return bundle.subjects
+        .where((s) => s.effectiveSemester == semester && !s.isOption)
         .toList();
   }
 
-  List<CurriculumSubject> getElectiveOptions({
-    required String collegeCode,
-    required String courseCode,
-    required String regulation,
+  List<CurriculumSubject> getElectiveOptions(
+    CurriculumBundle bundle, {
     required String electiveType,
   }) {
-    return curriculumData
-        .map((json) => CurriculumSubject.fromJson(json))
-        .where((s) =>
-            s.collegeCode == collegeCode &&
-            s.courseCode == courseCode &&
-            s.regulation == regulation &&
-            s.isOption &&
-            s.electiveType == electiveType)
+    return bundle.subjects
+        .where((s) => s.isOption && s.electiveType == electiveType)
         .toList();
-  }
-
-  String? getLatestRegulation({
-    required String collegeCode,
-    required String courseCode,
-  }) {
-    final regs = curriculumData
-        .where((json) =>
-            json['college_code'] == collegeCode &&
-            json['course_code'] == courseCode)
-        .map((json) => json['regulation'] as String)
-        .toSet()
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
-    return regs.firstOrNull;
   }
 
   Future<List<SavedSubject>?> getSavedSubjects(int semester) async {

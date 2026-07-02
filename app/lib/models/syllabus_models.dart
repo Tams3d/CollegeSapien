@@ -69,6 +69,38 @@ class CurriculumSubject {
   }
 }
 
+class CurriculumBundle {
+  final String collegeCode;
+  final String courseCode;
+  final String regulation;
+  final List<String> availableRegulations;
+  final List<CurriculumSubject> subjects;
+
+  CurriculumBundle({
+    required this.collegeCode,
+    required this.courseCode,
+    required this.regulation,
+    required this.availableRegulations,
+    required this.subjects,
+  });
+
+  factory CurriculumBundle.fromJson(Map<String, dynamic> json) {
+    final subjectsJson = json['subjects'] as List<dynamic>? ?? [];
+    return CurriculumBundle(
+      collegeCode: json['collegeCode'] as String? ?? '',
+      courseCode: json['courseCode'] as String? ?? '',
+      regulation: json['regulation'] as String? ?? '',
+      availableRegulations: (json['availableRegulations'] as List<dynamic>?)
+              ?.map((r) => r as String)
+              .toList() ??
+          [],
+      subjects: subjectsJson
+          .map((s) => CurriculumSubject.fromJson(s as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
 class SavedSubject {
   final String subjectCode;
   final String subjectName;

@@ -17,6 +17,7 @@ import collegeRoutes from './app/colleges/colleges.route';
 import subjectRoutes from './app/subjects/subjects.route';
 import syllabusRoutes from './app/syllabus/syllabus.route';
 import cmsRoutes from './app/cms/cms.route';
+import curriculumRoutes from './app/curriculum/curriculum.route';
 
 const app = express();
 
@@ -97,6 +98,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/colleges', collegeRoutes);
 app.use('/api/v1/subjects', subjectRoutes);
 app.use('/api/v1/syllabus', syllabusRoutes);
+app.use('/api/v1/curriculum', curriculumRoutes);
 
 app.use('/api/v1/cms', cmsRoutes);
 

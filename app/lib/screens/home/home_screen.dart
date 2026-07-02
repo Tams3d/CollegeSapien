@@ -239,15 +239,16 @@ class _HomeScreenState extends State<HomeScreen> {
               departments.where((d) => d.name == user.department).firstOrNull;
           final courseCode = deptObj?.code;
           if (collegeCode != null && courseCode != null) {
-            final regulation = syllabusService.getLatestRegulation(
-              collegeCode: collegeCode,
-              courseCode: courseCode,
-            );
-            if (regulation != null) {
-              final subjects = syllabusService.getSubjectsForSemester(
+            CurriculumBundle? bundle;
+            try {
+              bundle = await syllabusService.getCurriculum(
                 collegeCode: collegeCode,
                 courseCode: courseCode,
-                regulation: regulation,
+              );
+            } catch (_) {}
+            if (bundle != null) {
+              final subjects = syllabusService.getSubjectsForSemester(
+                bundle,
                 semester: user.semester,
               );
               if (subjects.isNotEmpty && mounted) {

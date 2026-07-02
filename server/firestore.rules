@@ -68,6 +68,15 @@ service cloud.firestore {
       );
     }
 
+    match /curricula/{curriculumId} {
+      allow get, list: if true;
+      allow write: if false;
+    }
+
+    match /curricula_pending/{curriculumId} {
+      allow read, write: if false;
+    }
+
     match /reports/{reportId} {
       allow create: if verified() && isOwner(request.resource.data.reportedBy);
       allow get, list, update, delete: if verified()
