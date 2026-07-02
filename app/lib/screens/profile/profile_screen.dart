@@ -37,7 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _cgpaStat = '--';
   String _semesterStat = '--';
   int? _subjectCount;
-  int? _totalCredits;
+  num? _totalCredits;
   String _filesUploaded = '--';
   String? _collegeName;
   String? _department;
@@ -136,7 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           try {
             final saved = await SyllabusService().getSavedSubjects(profile.semester);
             if (saved != null && saved.isNotEmpty && mounted) {
-              final credits = saved.fold<int>(0, (sum, s) => sum + (s.credits ?? 0));
+              final credits = saved.fold<num>(0, (sum, s) => sum + (s.credits ?? 0));
               setState(() {
                 _subjectCount = saved.length;
                 _totalCredits = credits > 0 ? credits : null;

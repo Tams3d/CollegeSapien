@@ -41,9 +41,13 @@ export const getCurriculum = async (req: AuthRequest, res: Response) => {
 
     const docs = snapshot.docs.map(d => d.data());
     const availableRegulations = docs
-      .map(d => d.regulation as string)
+      .map(d => d.regulation)
+      .filter((r): r is string => typeof r === 'string' && r.length > 0)
       .sort((a, b) => b.localeCompare(a));
-    const latest = docs.find(d => d.regulation === availableRegulations[0])!;
+    const latest = docs.find(d => d.regulation === availableRegulations[0]);
+    if (!latest) {
+      return res.status(404).json({ error: 'Curriculum not found' });
+    }
 
     res.setHeader('Cache-Control', 'public, max-age=21600, s-maxage=21600');
     return res.status(200).json({ ...latest, availableRegulations });

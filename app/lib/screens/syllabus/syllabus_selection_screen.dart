@@ -62,86 +62,83 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
           'collegeName=${profile.collegeName}, '
           'department="${profile.department}", semester=${profile.semester}');
 
-      final colleges = await _collegeService.listColleges();
-      final college =
-          colleges.where((c) => c.id == profile.collegeId).firstOrNull;
-      final collegeCode = college?.code;
-
-      dbg.writeln('College match: ${college?.name} => code=$collegeCode');
-      dbg.writeln(
-          'Available colleges: ${colleges.map((c) => "${c.id}:${c.code}").join(", ")}');
-
-      final deptObj =
-          departments.where((d) => d.name == profile.department).firstOrNull;
-      final courseCode = deptObj?.code;
-
-      dbg.writeln('Dept match: "${profile.department}" => code=$courseCode');
-
-      if (collegeCode == null || courseCode == null) {
-        dbg.writeln(
-            'STOPPED: collegeCode=$collegeCode, courseCode=$courseCode');
-        setState(() {
-          _debugInfo = dbg.toString();
-          _error = 'No syllabus found';
-          _isLoading = false;
-        });
-        return;
-      }
-
-      CurriculumBundle bundle;
+      // Saved subjects are the source of truth — fetch them first so a
+      // missing curriculum can never hide subjects the user already saved.
+      SavedSyllabus? saved;
       try {
-        bundle = await _syllabusService.getCurriculum(
-          collegeCode: collegeCode,
-          courseCode: courseCode,
-        );
-      } catch (_) {
-        dbg.writeln('STOPPED: no regulation found');
-        setState(() {
-          _debugInfo = dbg.toString();
-          _error = 'No syllabus found';
-          _isLoading = false;
-        });
-        return;
+        saved = await _syllabusService.getSavedSyllabus(profile.semester);
+        dbg.writeln('Saved subjects: ${saved?.subjects.length ?? 0} '
+            '(regulation=${saved?.regulation})');
+      } catch (e) {
+        dbg.writeln('Saved subjects fetch failed: $e');
       }
 
-      final regulation = bundle.regulation;
-      dbg.writeln('Regulation: $collegeCode + $courseCode => $regulation');
+      // Resolve college/course and curriculum. Needed for the first-time
+      // subject list and elective dropdowns, but optional once the user has
+      // saved subjects.
+      String? collegeCode;
+      String? courseCode;
+      CurriculumBundle? bundle;
+      try {
+        final colleges = await _collegeService.listColleges();
+        final college =
+            colleges.where((c) => c.id == profile.collegeId).firstOrNull;
+        collegeCode = college?.code;
 
-      _regulation = regulation;
+        dbg.writeln('College match: ${college?.name} => code=$collegeCode');
+        dbg.writeln(
+            'Available colleges: ${colleges.map((c) => "${c.id}:${c.code}").join(", ")}');
+
+        final deptObj =
+            departments.where((d) => d.name == profile.department).firstOrNull;
+        courseCode = deptObj?.code;
+
+        dbg.writeln('Dept match: "${profile.department}" => code=$courseCode');
+
+        if (collegeCode != null && courseCode != null) {
+          bundle = await _syllabusService.getCurriculum(
+            collegeCode: collegeCode,
+            courseCode: courseCode,
+          );
+          dbg.writeln(
+              'Regulation: $collegeCode + $courseCode => ${bundle.regulation}');
+        }
+      } catch (e) {
+        dbg.writeln('Curriculum fetch failed: $e');
+      }
+
+      _regulation = saved?.regulation ?? bundle?.regulation;
 
       // Load elective options from curriculum (for dropdown choices)
       final optionsMap = <String, List<CurriculumSubject>>{};
-      final curriculumSubjects = _syllabusService.getSubjectsForSemester(
-        bundle,
-        semester: profile.semester,
-      );
-      final optionPools = curriculumSubjects
-          .where((s) => s.isSlot && s.optionsFrom != null)
-          .map((s) => s.optionsFrom!)
-          .toSet();
-      for (final pool in optionPools) {
-        optionsMap[pool] = _syllabusService.getElectiveOptions(
+      var curriculumSubjects = <CurriculumSubject>[];
+      if (bundle != null) {
+        curriculumSubjects = _syllabusService.getSubjectsForSemester(
           bundle,
-          electiveType: pool,
+          semester: profile.semester,
         );
+        final optionPools = curriculumSubjects
+            .where((s) => s.isSlot && s.optionsFrom != null)
+            .map((s) => s.optionsFrom!)
+            .toSet();
+        for (final pool in optionPools) {
+          optionsMap[pool] = _syllabusService.getElectiveOptions(
+            bundle,
+            electiveType: pool,
+          );
+        }
       }
-
-      // Check if user already has saved subjects
-      List<SavedSubject>? saved;
-      try {
-        saved = await _syllabusService.getSavedSubjects(profile.semester);
-      } catch (_) {}
 
       final entries = <_SubjectEntry>[];
 
-      if (saved != null && saved.isNotEmpty) {
+      if (saved != null && saved.subjects.isNotEmpty) {
         // User has saved subjects — show exactly those
-        for (final sv in saved) {
+        for (final sv in saved.subjects) {
           final optFrom = sv.isElective ? _findOptionsFrom(sv.electiveType, curriculumSubjects) : null;
           final subject = CurriculumSubject(
-            collegeCode: collegeCode,
-            courseCode: courseCode,
-            regulation: regulation,
+            collegeCode: collegeCode ?? '',
+            courseCode: courseCode ?? '',
+            regulation: _regulation ?? '',
             semester: '${profile.semester}',
             subjectCode: sv.subjectCode,
             subjectName: sv.subjectName,
@@ -164,6 +161,17 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
         }
       } else {
         // First time — load from curriculum
+        if (bundle == null) {
+          dbg.writeln('STOPPED: no saved subjects and no curriculum '
+              '(collegeCode=$collegeCode, courseCode=$courseCode)');
+          setState(() {
+            _debugInfo = dbg.toString();
+            _error = 'No syllabus found';
+            _isLoading = false;
+          });
+          return;
+        }
+
         dbg.writeln(
             'Subjects found: ${curriculumSubjects.length} for semester ${profile.semester}');
 
@@ -601,7 +609,7 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
     }
 
     final semester = _profile?.semester ?? 0;
-    final totalCredits = _entries.fold<int>(
+    final totalCredits = _entries.fold<num>(
         0, (sum, e) => sum + (e.editedCredits ?? e.subject.credits ?? 0));
 
     return Column(
@@ -615,7 +623,7 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Semester $semester  •  $_regulation',
+                'Semester $semester${_regulation != null ? '  •  $_regulation' : ''}',
                 style: const TextStyle(
                   fontFamily: 'Lexend Mega',
                   fontSize: 14,
