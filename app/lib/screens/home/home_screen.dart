@@ -709,7 +709,7 @@ class _HomeScreenState extends State<HomeScreen> {
         border: Border.all(color: Colors.black, width: 1.5),
         borderRadius: BorderRadius.circular(8),
         boxShadow: const [
-          BoxShadow(offset: Offset(4, 4), color: Colors.black)
+          BoxShadow(offset: Offset(1, 1), color: Colors.black)
         ],
       ),
       child: ClipRRect(
@@ -867,7 +867,7 @@ class _HomeScreenState extends State<HomeScreen> {
         border: Border.all(color: Colors.black, width: 1.5),
         borderRadius: BorderRadius.circular(8),
         boxShadow: const [
-          BoxShadow(offset: Offset(4, 4), color: Colors.black)
+          BoxShadow(offset: Offset(1, 1), color: Colors.black)
         ],
       ),
       child: ClipRRect(
@@ -974,7 +974,7 @@ class _HomeScreenState extends State<HomeScreen> {
           border: Border.all(color: Colors.black, width: 1.5),
           borderRadius: BorderRadius.circular(8),
           boxShadow: const [
-            BoxShadow(offset: Offset(4, 4), color: Colors.black)
+            BoxShadow(offset: Offset(2, 2), color: Colors.black)
           ],
         ),
         child: ClipRRect(

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../models/api_models.dart';
-import '../../services/attendance_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
-import '../../services/syllabus_service.dart';
+import '../../providers/app_state_notifier.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 import '../attendance_screen.dart';
@@ -29,7 +28,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   static const _cgpaCacheKey = 'profile_cgpa_stat';
-  static const _semesterCacheKey = 'profile_semester_stat';
   static const _semesterPrefsKey = 'last_semester';
   static const _filesUploadedCacheKey = 'profile_files_uploaded_stat';
 
@@ -51,44 +49,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadStats() async {
-    // Attendance — show cached immediately, then refresh
-    final cached = CacheService.instance
-        .get<List<AttendanceSummary>>('attendance_summary');
-    if (cached != null && cached.isNotEmpty) {
-      final avg = cached.map((s) => s.percentage).reduce((a, b) => a + b) /
-          cached.length;
-      if (mounted) {
-        setState(() => _attendanceStat = '${avg.toStringAsFixed(1)}%');
+    final appState = Provider.of<AppStateNotifier>(context, listen: false);
+
+    // Paint straight from the shared app-state cache (populated by
+    // /auth/sync on app launch) instead of always hitting the network.
+    final cachedProfile = appState.userProfile;
+    if (cachedProfile != null) {
+      if (cachedProfile.semester > 0) {
+        _semesterStat = cachedProfile.semester.toString();
       }
+      _collegeName = cachedProfile.collegeName;
+      _department = cachedProfile.department;
+    }
+    final cachedAttendance = appState.attendanceSummary;
+    if (cachedAttendance != null && cachedAttendance.isNotEmpty) {
+      final avg = cachedAttendance.map((s) => s.percentage).reduce((a, b) => a + b) /
+          cachedAttendance.length;
+      _attendanceStat = '${avg.toStringAsFixed(1)}%';
+    }
+    final cachedSubjects = appState.savedSubjects;
+    if (cachedSubjects != null && cachedSubjects.isNotEmpty) {
+      final credits = cachedSubjects.fold<num>(0, (sum, s) => sum + (s.credits ?? 0));
+      _subjectCount = cachedSubjects.length;
+      _totalCredits = credits > 0 ? credits : null;
     }
 
-    // CGPA/Semester/Files — show in-memory cache immediately
+    // CGPA/Files uploaded aren't part of /auth/sync — keep their own cache.
     final cachedCgpa = CacheService.instance.get<String>(_cgpaCacheKey);
-    if (cachedCgpa != null && mounted) setState(() => _cgpaStat = cachedCgpa);
-    final cachedSemester = CacheService.instance.get<String>(_semesterCacheKey);
-    if (cachedSemester != null && mounted) {
-      setState(() => _semesterStat = cachedSemester);
-    }
+    if (cachedCgpa != null) _cgpaStat = cachedCgpa;
     final cachedFilesUploaded =
         CacheService.instance.get<String>(_filesUploadedCacheKey);
-    if (cachedFilesUploaded != null && mounted) {
-      setState(() => _filesUploaded = cachedFilesUploaded);
-    }
+    if (cachedFilesUploaded != null) _filesUploaded = cachedFilesUploaded;
 
-    // CGPA/Semester — show persisted values, then refresh semester from profile sync
+    if (mounted) setState(() {});
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final cgpa = prefs.getString('last_cgpa');
       if (cgpa != null) {
         CacheService.instance.set(_cgpaCacheKey, cgpa);
         if (mounted) setState(() => _cgpaStat = cgpa);
-      }
-
-      final semester = prefs.getInt(_semesterPrefsKey);
-      if (semester != null) {
-        final semText = semester.toString();
-        CacheService.instance.set(_semesterCacheKey, semText);
-        if (mounted) setState(() => _semesterStat = semText);
       }
 
       final filesUploaded = prefs.getString('last_files_uploaded');
@@ -98,54 +98,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (_) {}
 
-    try {
-      final summaries = await AttendanceService().getSummary();
-      CacheService.instance.set('attendance_summary', summaries);
-      if (summaries.isNotEmpty) {
-        final avg = summaries.map((s) => s.percentage).reduce((a, b) => a + b) /
-            summaries.length;
-        if (mounted) {
-          setState(() => _attendanceStat = '${avg.toStringAsFixed(1)}%');
-        }
-      }
-    } catch (_) {}
-
-    // Semester + college from profile sync
-    try {
-      final result = await AuthService.instance.syncProfile();
-      final profile = result.user;
-      if (profile != null) {
-        final sem = profile.semester;
-        if (sem > 0) {
-          final semText = sem.toString();
-          CacheService.instance.set(_semesterCacheKey, semText);
+    // Background refresh — only hit the network for pieces whose cache is
+    // stale/missing, so reopening this screen doesn't always re-sync.
+    if (appState.userProfile == null ||
+        appState.attendanceSummary == null ||
+        appState.savedSubjects == null) {
+      try {
+        final result = await AuthService.instance.syncProfile();
+        final profile = result.user;
+        if (profile != null) {
+          appState.setUserProfile(profile);
           try {
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setInt(_semesterPrefsKey, sem);
+            await prefs.setInt(_semesterPrefsKey, profile.semester);
           } catch (_) {}
-          if (mounted) setState(() => _semesterStat = semText);
-        }
-        if (mounted) {
-          setState(() {
-            if (profile.collegeName != null) _collegeName = profile.collegeName;
-            if (profile.department != null) _department = profile.department;
-          });
+          if (mounted) {
+            setState(() {
+              if (profile.semester > 0) {
+                _semesterStat = profile.semester.toString();
+              }
+              if (profile.collegeName != null) _collegeName = profile.collegeName;
+              if (profile.department != null) _department = profile.department;
+            });
+          }
         }
 
-        if (profile.semester > 0) {
-          try {
-            final saved = await SyllabusService().getSavedSubjects(profile.semester);
-            if (saved != null && saved.isNotEmpty && mounted) {
-              final credits = saved.fold<num>(0, (sum, s) => sum + (s.credits ?? 0));
-              setState(() {
-                _subjectCount = saved.length;
-                _totalCredits = credits > 0 ? credits : null;
-              });
-            }
-          } catch (_) {}
+        final freshAttendance = result.attendanceSummary;
+        if (freshAttendance != null) {
+          appState.setAttendanceSummary(freshAttendance);
+          if (freshAttendance.isNotEmpty && mounted) {
+            final avg = freshAttendance.map((s) => s.percentage).reduce((a, b) => a + b) /
+                freshAttendance.length;
+            setState(() => _attendanceStat = '${avg.toStringAsFixed(1)}%');
+          }
         }
-      }
-    } catch (_) {}
+
+        final freshSubjects = result.savedSubjects?.subjects;
+        if (freshSubjects != null && freshSubjects.isNotEmpty) {
+          appState.setSavedSubjects(freshSubjects);
+          if (mounted) {
+            final credits = freshSubjects.fold<num>(0, (sum, s) => sum + (s.credits ?? 0));
+            setState(() {
+              _subjectCount = freshSubjects.length;
+              _totalCredits = credits > 0 ? credits : null;
+            });
+          }
+        }
+      } catch (_) {}
+    }
 
     // Files uploaded by this user
     try {
