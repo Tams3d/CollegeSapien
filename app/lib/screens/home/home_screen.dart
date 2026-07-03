@@ -527,19 +527,16 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _header(),
               const SizedBox(height: 24),
-              IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: _attendanceCard(),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _isDayOver ? _dayOverCard() : _nextClassCard(),
-                    ),
-                  ],
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _attendanceCard(),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _isDayOver ? _dayOverCard() : _nextClassCard(),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               _sectionHeader("Today's Timetable", onShowAll: () {
@@ -708,6 +705,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Container(
+        height: 180,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.primaryYellow,
@@ -865,6 +863,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Container(
+        height: 180,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.primaryYellow,
@@ -971,6 +970,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Container(
+          height: 180,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.accentPink,
