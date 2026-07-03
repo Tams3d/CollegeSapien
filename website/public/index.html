@@ -1,0 +1,1469 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CollegeSapien — Open-Source Academic Platform</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossorigin=""
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            :root {
+                --bg: #feeec3;
+                --bg2: #fefcf5;
+                --yellow: #ffd966;
+                --dk-yellow: #fcd150;
+                --green: #d2ffb6;
+                --pink: #ffc0b6;
+                --purple: #e3b6ff;
+                --blue: #b6eaff;
+                --lt-blue: #c8ebff;
+                --tag-purple: #9191ff;
+                --black: #0a0a0a;
+                --ink: #2a2a2a;
+                --bdr: 2px solid #0a0a0a;
+                --sh: 4px 4px 0 #0a0a0a;
+                --sh-lg: 6px 6px 0 #0a0a0a;
+            }
+
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html {
+                scroll-behavior: smooth;
+            }
+            body {
+                background: var(--bg);
+                color: var(--black);
+                font-family: "DM Sans", sans-serif;
+                overflow-x: hidden;
+            }
+            h1,
+            h2,
+            h3,
+            h4 {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-weight: 800;
+                line-height: 1.05;
+                letter-spacing: -0.025em;
+            }
+
+            /* ── UTILS ── */
+            .pill {
+                display: inline-block;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                background: var(--yellow);
+                border: var(--bdr);
+                padding: 3px 10px;
+                box-shadow: 2px 2px 0 var(--black);
+                margin-bottom: 16px;
+            }
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 11px 22px;
+                font-family: "DM Sans", sans-serif;
+                font-weight: 600;
+                font-size: 14px;
+                border: var(--bdr);
+                cursor: pointer;
+                text-decoration: none;
+                transition:
+                    transform 0.12s,
+                    box-shadow 0.12s;
+                white-space: nowrap;
+            }
+            .btn:hover {
+                transform: translate(-2px, -2px);
+            }
+            .btn:active {
+                transform: translate(1px, 1px);
+                box-shadow: none !important;
+            }
+            .btn-dark {
+                background: var(--black);
+                color: var(--bg);
+                box-shadow: var(--sh);
+            }
+            .btn-dark:hover {
+                box-shadow: var(--sh-lg);
+            }
+            .btn-ghost {
+                background: transparent;
+                color: var(--black);
+            }
+            .btn-ghost:hover {
+                background: rgba(0, 0, 0, 0.06);
+                box-shadow: var(--sh);
+            }
+
+            /* ── NAV ── */
+            .nav {
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                background: var(--yellow);
+                border-bottom: var(--bdr);
+                padding: 0 56px;
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .nav-logo {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-weight: 800;
+                font-size: 19px;
+                letter-spacing: -0.04em;
+                text-decoration: none;
+                color: var(--black);
+            }
+            .nav-links {
+                display: flex;
+                align-items: center;
+                gap: 32px;
+                list-style: none;
+            }
+            .nav-links a {
+                text-decoration: none;
+                font-size: 14px;
+                font-weight: 500;
+                opacity: 0.7;
+                transition: opacity 0.15s;
+            }
+            .nav-links a:hover {
+                opacity: 1;
+            }
+
+            /* ── TICKER ── */
+            .ticker-outer {
+                background: var(--black);
+                border-bottom: var(--bdr);
+                overflow: hidden;
+                padding: 11px 0;
+            }
+            .ticker-track {
+                display: flex;
+                white-space: nowrap;
+                animation: ticker 28s linear infinite;
+                width: max-content;
+            }
+            .ticker-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 18px;
+                padding: 0 28px;
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--yellow);
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+            .ticker-sep {
+                width: 5px;
+                height: 5px;
+                background: var(--yellow);
+                border-radius: 50%;
+                opacity: 0.45;
+            }
+            @keyframes ticker {
+                from {
+                    transform: translateX(0);
+                }
+                to {
+                    transform: translateX(-50%);
+                }
+            }
+
+            /* ── HERO ── */
+            .hero-wrap {
+                border-bottom: var(--bdr);
+            }
+            .hero {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                align-items: center;
+                gap: 40px;
+                padding: 72px 56px 88px;
+                max-width: 1360px;
+                margin: 0 auto;
+                min-height: calc(100vh - 92px);
+            }
+            .hero-eyebrow {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: var(--tag-purple);
+                color: white;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                padding: 4px 12px;
+                border: var(--bdr);
+                box-shadow: 2px 2px 0 var(--black);
+                margin-bottom: 24px;
+            }
+            .hero-dot {
+                width: 6px;
+                height: 6px;
+                background: #7bf5a0;
+                border-radius: 50%;
+            }
+            .hero h1 {
+                font-size: clamp(38px, 4.6vw, 68px);
+                margin-bottom: 20px;
+                text-wrap: pretty;
+            }
+            .hero-sub {
+                font-size: 17px;
+                color: var(--ink);
+                line-height: 1.65;
+                margin-bottom: 36px;
+                max-width: 460px;
+            }
+            .hero-actions {
+                display: flex;
+                gap: 14px;
+                flex-wrap: wrap;
+            }
+            .hero-actions .btn {
+                padding: 13px 26px;
+                font-size: 15px;
+            }
+
+            /* Phone */
+            .hero-visual {
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 560px;
+            }
+            .phone {
+                width: 264px;
+                height: 536px;
+                border: 3px solid var(--black);
+                border-radius: 36px;
+                box-shadow: var(--sh-lg);
+                overflow: hidden;
+                background: var(--dk-yellow);
+                position: relative;
+                flex-shrink: 0;
+            }
+            .phone-notch {
+                position: absolute;
+                top: 12px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 78px;
+                height: 22px;
+                background: var(--black);
+                border-radius: 99px;
+                z-index: 2;
+            }
+            .phone-screen {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .phone-ph {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+                opacity: 0.35;
+            }
+            .phone-ph span {
+                font-family: monospace;
+                font-size: 11px;
+                text-align: center;
+                line-height: 1.5;
+            }
+
+            /* Float cards */
+            .icard {
+                position: absolute;
+                border: var(--bdr);
+                box-shadow: var(--sh);
+                padding: 10px 14px;
+                border-radius: 3px;
+                font-family: "Bricolage Grotesque", sans-serif;
+            }
+            .icard-label {
+                font-size: 9px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.07em;
+                opacity: 0.55;
+                margin-bottom: 3px;
+            }
+            .icard-val {
+                font-size: 17px;
+                font-weight: 800;
+            }
+            .ic-a {
+                background: var(--green);
+                top: 72px;
+                right: 4px;
+                animation: flt 3.2s ease-in-out infinite;
+            }
+            .ic-b {
+                background: var(--blue);
+                top: 48%;
+                left: 4px;
+                transform: translateY(-50%);
+                animation: fltm 3.8s ease-in-out infinite 0.4s;
+            }
+            .ic-c {
+                background: var(--pink);
+                bottom: 80px;
+                right: 4px;
+                animation: flt 2.9s ease-in-out infinite 0.8s;
+            }
+            @keyframes flt {
+                0%,
+                100% {
+                    transform: translateY(0);
+                }
+                50% {
+                    transform: translateY(-7px);
+                }
+            }
+            @keyframes fltm {
+                0%,
+                100% {
+                    transform: translateY(-50%);
+                }
+                50% {
+                    transform: translateY(calc(-50% - 7px));
+                }
+            }
+
+            /* ── VALUE STRIP ── */
+            .value-strip {
+                background: var(--black);
+                border-bottom: var(--bdr);
+                padding: 36px 56px;
+            }
+            .value-strip p {
+                font-size: 18px;
+                font-weight: 500;
+                line-height: 1.65;
+                color: var(--yellow);
+                max-width: 760px;
+                margin: 0 auto;
+                text-align: center;
+            }
+
+            /* ── SECTIONS ── */
+            .sec {
+                padding: 88px 56px;
+                max-width: 1360px;
+                margin: 0 auto;
+            }
+            .sec-h {
+                font-size: clamp(28px, 3.5vw, 50px);
+                margin-bottom: 48px;
+            }
+
+            /* ── FEATURES ── */
+            .feat-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                border: var(--bdr);
+            }
+            .feat {
+                padding: 32px;
+                border-right: var(--bdr);
+                border-bottom: var(--bdr);
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+                position: relative;
+            }
+            .feat:nth-child(3n) {
+                border-right: none;
+            }
+            .feat:nth-child(n + 4) {
+                border-bottom: none;
+            }
+            .feat:hover {
+                transform: scale(1.025);
+                box-shadow: var(--sh-lg);
+                z-index: 2;
+            }
+            .feat:nth-child(1) {
+                background: var(--green);
+            }
+            .feat:nth-child(2) {
+                background: var(--blue);
+            }
+            .feat:nth-child(3) {
+                background: var(--pink);
+            }
+            .feat:nth-child(4) {
+                background: var(--purple);
+            }
+            .feat:nth-child(5) {
+                background: var(--yellow);
+            }
+            .feat:nth-child(6) {
+                background: var(--lt-blue);
+            }
+            .feat-n {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-size: 42px;
+                font-weight: 800;
+                color: rgba(0, 0, 0, 0.1);
+                line-height: 1;
+                margin-bottom: 10px;
+            }
+            .feat-t {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-size: 19px;
+                font-weight: 700;
+                margin-bottom: 7px;
+            }
+            .feat-d {
+                font-size: 14px;
+                color: var(--ink);
+                line-height: 1.6;
+            }
+
+            /* ── HOW IT WORKS ── */
+            .steps-out {
+                background: var(--black);
+                border-top: var(--bdr);
+                border-bottom: var(--bdr);
+                padding: 88px 56px;
+            }
+            .steps-in {
+                max-width: 1360px;
+                margin: 0 auto;
+            }
+            .steps-out .pill {
+                background: var(--yellow);
+            }
+            .steps-out .sec-h {
+                color: white;
+            }
+            .steps-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            .step {
+                background: var(--bg);
+                border: var(--bdr);
+                box-shadow: var(--sh);
+                padding: 32px;
+            }
+            .step-n {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-size: 54px;
+                font-weight: 800;
+                color: var(--yellow);
+                line-height: 1;
+                margin-bottom: 14px;
+            }
+            .step-t {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-size: 18px;
+                font-weight: 700;
+                margin-bottom: 8px;
+            }
+            .step p {
+                font-size: 14px;
+                color: var(--ink);
+                line-height: 1.6;
+            }
+
+            /* ── SUITE ── */
+            .suite-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            .suite-card {
+                border: var(--bdr);
+                box-shadow: var(--sh);
+                padding: 32px;
+                background: var(--bg2);
+                transition:
+                    transform 0.15s,
+                    box-shadow 0.15s;
+            }
+            .suite-card:hover {
+                transform: translate(-3px, -3px);
+                box-shadow: var(--sh-lg);
+            }
+            .suite-badge {
+                display: inline-block;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.07em;
+                background: var(--bg);
+                border: var(--bdr);
+                padding: 2px 8px;
+                margin-bottom: 14px;
+            }
+            .suite-icon {
+                width: 48px;
+                height: 48px;
+                background: var(--yellow);
+                border: var(--bdr);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 16px;
+            }
+            .suite-card h3 {
+                font-size: 21px;
+                margin-bottom: 8px;
+            }
+            .suite-card p {
+                font-size: 14px;
+                color: var(--ink);
+                line-height: 1.6;
+            }
+
+            /* ── OSS ── */
+            .oss-out {
+                background: var(--purple);
+                border-top: var(--bdr);
+                border-bottom: var(--bdr);
+                padding: 88px 56px;
+            }
+            .oss-in {
+                max-width: 1360px;
+                margin: 0 auto;
+                display: grid;
+                grid-template-columns: 5fr 7fr;
+                gap: 72px;
+                align-items: start;
+            }
+            .oss-out .sec-h {
+                font-size: clamp(26px, 3vw, 46px);
+                margin-bottom: 20px;
+            }
+            .oss-desc {
+                font-size: 16px;
+                color: var(--ink);
+                line-height: 1.7;
+                margin-bottom: 28px;
+            }
+            .oss-list {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+            .oss-item {
+                background: var(--bg2);
+                border: var(--bdr);
+                box-shadow: var(--sh);
+                padding: 18px 20px;
+                display: flex;
+                gap: 16px;
+                align-items: flex-start;
+            }
+            .oss-num {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-size: 22px;
+                font-weight: 800;
+                color: var(--tag-purple);
+                min-width: 28px;
+                line-height: 1.2;
+            }
+            .oss-item-t {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-size: 15px;
+                font-weight: 700;
+                margin-bottom: 3px;
+            }
+            .oss-item p {
+                font-size: 13px;
+                color: var(--ink);
+                line-height: 1.5;
+            }
+
+            /* ── CTA ── */
+            .cta-out {
+                background: var(--dk-yellow);
+                border-bottom: var(--bdr);
+                padding: 100px 56px;
+                text-align: center;
+            }
+            .cta-out h2 {
+                font-size: clamp(32px, 4.5vw, 64px);
+                margin-bottom: 14px;
+            }
+            .cta-out p {
+                font-size: 17px;
+                color: var(--ink);
+                margin-bottom: 36px;
+            }
+            .cta-btns {
+                display: flex;
+                gap: 14px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .cta-btns .btn {
+                padding: 14px 30px;
+                font-size: 15px;
+            }
+
+            /* ── FOOTER ── */
+            .footer {
+                background: var(--black);
+                padding: 36px 56px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 24px;
+            }
+            .footer-logo {
+                font-family: "Bricolage Grotesque", sans-serif;
+                font-weight: 800;
+                font-size: 18px;
+                color: var(--yellow);
+                letter-spacing: -0.03em;
+            }
+            .footer-note {
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.4);
+            }
+            .footer-links {
+                display: flex;
+                gap: 20px;
+            }
+            .footer-links a {
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.6);
+                text-decoration: none;
+                transition: color 0.15s;
+            }
+            .footer-links a:hover {
+                color: var(--yellow);
+            }
+
+            /* ── REVEAL ── */
+            .r {
+                opacity: 0;
+                transform: translateY(18px);
+                transition:
+                    opacity 0.5s,
+                    transform 0.5s;
+            }
+            .r.in {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .rd1 {
+                transition-delay: 0.1s;
+            }
+            .rd2 {
+                transition-delay: 0.2s;
+            }
+            .rd3 {
+                transition-delay: 0.3s;
+            }
+            .rd4 {
+                transition-delay: 0.4s;
+            }
+            .rd5 {
+                transition-delay: 0.5s;
+            }
+            .rd6 {
+                transition-delay: 0.6s;
+            }
+
+            /* ── RESPONSIVE ── */
+            @media (max-width: 900px) {
+                .nav {
+                    padding: 0 24px;
+                }
+                .nav-links {
+                    display: none;
+                }
+                .hero {
+                    grid-template-columns: 1fr;
+                    padding: 48px 24px;
+                    min-height: auto;
+                }
+                .hero-visual {
+                    display: none;
+                }
+                .sec {
+                    padding: 64px 24px;
+                }
+                .feat-grid {
+                    grid-template-columns: 1fr;
+                }
+                .feat:nth-child(n) {
+                    border-right: none;
+                    border-bottom: var(--bdr);
+                }
+                .feat:last-child {
+                    border-bottom: none;
+                }
+                .steps-out,
+                .oss-out,
+                .cta-out {
+                    padding: 64px 24px;
+                }
+                .value-strip {
+                    padding: 28px 24px;
+                }
+                .steps-grid,
+                .suite-grid {
+                    grid-template-columns: 1fr;
+                }
+                .oss-in {
+                    grid-template-columns: 1fr;
+                    gap: 40px;
+                }
+                .footer {
+                    flex-direction: column;
+                    text-align: center;
+                    padding: 28px 24px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- NAV -->
+        <nav class="nav">
+            <a href="#" class="nav-logo">CollegeSapien</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How it works</a></li>
+                <li><a href="#open-source">Open source</a></li>
+            </ul>
+            <div style="display: flex; gap: 12px; align-items: center">
+                <a
+                    href="https://github.com/codesapiens-in/collegesapien"
+                    class="btn btn-dark"
+                    style="padding: 9px 18px; font-size: 13px"
+                >
+                    <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                    >
+                        <path
+                            d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"
+                        />
+                    </svg>
+                    GitHub
+                </a>
+            </div>
+        </nav>
+
+        <!-- TICKER -->
+        <div class="ticker-outer">
+            <div class="ticker-track" id="ticker">
+                <span class="ticker-item"
+                    >Open Source<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >MIT License<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Flutter<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Nuxt 3<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Firebase<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Node.js<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Learn by Building<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Student-First<span class="ticker-sep"></span
+                ></span>
+                <!-- duplicate for seamless loop -->
+                <span class="ticker-item"
+                    >Open Source<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >MIT License<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Flutter<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Nuxt 3<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Firebase<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Node.js<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Learn by Building<span class="ticker-sep"></span
+                ></span>
+                <span class="ticker-item"
+                    >Student-First<span class="ticker-sep"></span
+                ></span>
+            </div>
+        </div>
+
+        <!-- HERO -->
+        <div class="hero-wrap">
+            <div class="hero">
+                <div>
+                    <div class="hero-eyebrow">
+                        <span class="hero-dot"></span> Open Source · MIT License
+                    </div>
+                    <h1>
+                        Build the future of campus life—open&nbsp;source &amp;
+                        student&#8209;first.
+                    </h1>
+                    <p class="hero-sub">
+                        CollegeSapien is an open‑source platform for
+                        universities, combining a modern mobile app, admin
+                        dashboard, and secure backend—built by the community,
+                        for the community.
+                    </p>
+                    <div class="hero-actions">
+                        <a
+                            href="https://github.com/codesapiens-in/collegesapien"
+                            class="btn btn-dark"
+                        >
+                            <svg
+                                width="15"
+                                height="15"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
+                                <path
+                                    d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"
+                                />
+                            </svg>
+                            View on GitHub
+                        </a>
+                        <a href="#" class="btn btn-ghost">Get the App</a>
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="phone">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="phone-ph">
+                                <svg
+                                    width="40"
+                                    height="40"
+                                    viewBox="0 0 40 40"
+                                    fill="none"
+                                >
+                                    <rect
+                                        width="40"
+                                        height="40"
+                                        rx="8"
+                                        fill="rgba(0,0,0,0.08)"
+                                    />
+                                    <rect
+                                        x="8"
+                                        y="8"
+                                        width="24"
+                                        height="4"
+                                        rx="2"
+                                        fill="rgba(0,0,0,0.15)"
+                                    />
+                                    <rect
+                                        x="8"
+                                        y="16"
+                                        width="16"
+                                        height="3"
+                                        rx="1.5"
+                                        fill="rgba(0,0,0,0.1)"
+                                    />
+                                    <rect
+                                        x="8"
+                                        y="22"
+                                        width="20"
+                                        height="3"
+                                        rx="1.5"
+                                        fill="rgba(0,0,0,0.1)"
+                                    />
+                                </svg>
+                                <span>app screenshot<br />goes here</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="icard ic-a">
+                        <div class="icard-label">Attendance</div>
+                        <div class="icard-val">87%</div>
+                    </div>
+                    <div class="icard ic-b">
+                        <div class="icard-label">Next Class</div>
+                        <div class="icard-val">10:30 AM</div>
+                    </div>
+                    <div class="icard ic-c">
+                        <div class="icard-label">Predicted</div>
+                        <div class="icard-val">Grade A</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VALUE STRIP -->
+        <div class="value-strip">
+            <p>
+                Make academic life simpler: track attendance, see today's
+                schedule at a glance, access notes and question papers, and stay
+                connected to your campus community.
+            </p>
+        </div>
+
+        <!-- FEATURES -->
+        <section class="sec" id="features">
+            <div class="pill">Features</div>
+            <h2 class="sec-h">Everything a student needs.</h2>
+            <div class="feat-grid">
+                <div class="feat r">
+                    <div class="feat-n">01</div>
+                    <div class="feat-t">Attendance Tracking</div>
+                    <p class="feat-d">
+                        Real‑time attendance percentages with clear visual
+                        progress so you always know where you stand.
+                    </p>
+                </div>
+                <div class="feat r rd2">
+                    <div class="feat-n">02</div>
+                    <div class="feat-t">Smart Timetable</div>
+                    <p class="feat-d">
+                        Color‑coded class cards and today's schedule view keep
+                        your day organized at a glance.
+                    </p>
+                </div>
+                <div class="feat r rd3">
+                    <div class="feat-n">03</div>
+                    <div class="feat-t">Next Class Preview</div>
+                    <p class="feat-d">
+                        Quick look at the upcoming class, room, and time —
+                        always one step ahead.
+                    </p>
+                </div>
+                <div class="feat r rd1">
+                    <div class="feat-n">04</div>
+                    <div class="feat-t">Community Feed</div>
+                    <p class="feat-d">
+                        Share notes and resources with classmates. Learning is
+                        always better together.
+                    </p>
+                </div>
+                <div class="feat r rd2">
+                    <div class="feat-n">05</div>
+                    <div class="feat-t">Resources Hub</div>
+                    <p class="feat-d">
+                        Syllabus, question papers, and study materials all in
+                        one accessible place.
+                    </p>
+                </div>
+                <div class="feat r rd3">
+                    <div class="feat-n">06</div>
+                    <div class="feat-t">Grade Prediction</div>
+                    <p class="feat-d">
+                        Estimate required external marks from internal
+                        performance. Plan with confidence.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS -->
+        <div class="steps-out" id="how-it-works">
+            <div class="steps-in">
+                <div class="pill">How it works</div>
+                <h2 class="sec-h">Up and running in minutes.</h2>
+                <div class="steps-grid">
+                    <div class="step r">
+                        <div class="step-n">01</div>
+                        <div class="step-t">Sign in with college email</div>
+                        <p>
+                            Verify with your institutional email for secure,
+                            campus‑specific access.
+                        </p>
+                    </div>
+                    <div class="step r rd2">
+                        <div class="step-n">02</div>
+                        <div class="step-t">
+                            Set up subjects &amp; timetable
+                        </div>
+                        <p>
+                            Configure your subjects and weekly schedule for the
+                            current semester in minutes.
+                        </p>
+                    </div>
+                    <div class="step r rd4">
+                        <div class="step-n">03</div>
+                        <div class="step-t">Stay ahead all semester</div>
+                        <p>
+                            Track attendance and access resources daily — never
+                            miss a beat.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUITE -->
+        <section class="sec">
+            <div class="pill">Product Suite</div>
+            <h2 class="sec-h">Three layers, one platform.</h2>
+            <div class="suite-grid">
+                <div class="suite-card r">
+                    <div class="suite-icon">
+                        <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <rect x="5" y="2" width="14" height="20" rx="2" />
+                            <line x1="12" y1="18" x2="12" y2="18.01" />
+                        </svg>
+                    </div>
+                    <div class="suite-badge">Flutter</div>
+                    <h3>Mobile App</h3>
+                    <p>
+                        A pixel‑perfect student app built from Figma specs.
+                        Thenable, responsive, and fast — attendance, timetable,
+                        and resources in your pocket.
+                    </p>
+                </div>
+                <div class="suite-card r rd2">
+                    <div class="suite-icon">
+                        <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <line x1="8" y1="21" x2="16" y2="21" />
+                            <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                    </div>
+                    <div class="suite-badge">Nuxt 3</div>
+                    <h3>Admin Dashboard</h3>
+                    <p>
+                        Manage colleges, users, subjects, and resource reports
+                        from a single dashboard with audit‑friendly workflows.
+                    </p>
+                </div>
+                <div class="suite-card r rd4">
+                    <div class="suite-icon">
+                        <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <polyline points="16 18 22 12 16 6" />
+                            <polyline points="8 6 2 12 8 18" />
+                        </svg>
+                    </div>
+                    <div class="suite-badge">Node.js + Firebase</div>
+                    <h3>Backend API</h3>
+                    <p>
+                        Secure, scalable data management with Firebase
+                        Functions. Built to handle real campus‑scale usage with
+                        confidence.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- OSS -->
+        <div class="oss-out" id="open-source">
+            <div class="oss-in">
+                <div>
+                    <div class="pill">Open Source</div>
+                    <h2 class="sec-h">Contribute, learn, and ship.</h2>
+                    <p class="oss-desc">
+                        Transparent, extensible, and welcoming to contributors —
+                        CollegeSapien is a hands‑on project for learners and
+                        builders who want real impact.
+                    </p>
+                    <a
+                        href="https://github.com/codesapiens-in/collegesapien"
+                        class="btn btn-dark"
+                    >
+                        <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"
+                            />
+                        </svg>
+                        Star on GitHub
+                    </a>
+                </div>
+                <div class="oss-list">
+                    <div class="oss-item r">
+                        <div class="oss-num">01</div>
+                        <div>
+                            <div class="oss-item-t">Learn by building</div>
+                            <p>
+                                Contribute to a real‑world monorepo spanning
+                                Flutter, Nuxt 3, and Firebase.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="oss-item r rd1">
+                        <div class="oss-num">02</div>
+                        <div>
+                            <div class="oss-item-t">
+                                Community‑driven roadmap
+                            </div>
+                            <p>
+                                Features shaped by students, developers, and
+                                campus teams worldwide.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="oss-item r rd2">
+                        <div class="oss-num">03</div>
+                        <div>
+                            <div class="oss-item-t">Modular by design</div>
+                            <p>
+                                Extend the mobile app, admin dashboard, or
+                                backend independently.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="oss-item r rd3">
+                        <div class="oss-num">04</div>
+                        <div>
+                            <div class="oss-item-t">Documentation‑first</div>
+                            <p>
+                                Clear setup guides and contributor workflows for
+                                all experience levels.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-out">
+            <h2>Bring CollegeSapien to your campus.</h2>
+            <p>
+                Join a growing OSS community improving attendance, timetables,
+                and academic resources for campuses everywhere.
+            </p>
+            <div class="cta-btns">
+                <a
+                    href="https://github.com/codesapiens-in/collegesapien"
+                    class="btn btn-dark"
+                >
+                    <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                    >
+                        <path
+                            d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"
+                        />
+                    </svg>
+                    View on GitHub
+                </a>
+                <a href="#" class="btn btn-ghost">Get the App</a>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <div class="footer-logo">CollegeSapien</div>
+            <p class="footer-note">
+                Licensed under MIT · Open to contributors of all experience
+                levels.
+            </p>
+            <div class="footer-links">
+                <a href="https://github.com/codesapiens-in/collegesapien"
+                    >GitHub</a
+                >
+                <a href="./privacy.html">Privacy Policy</a>
+                <a href="./terms.html">Terms of Service</a>
+                <a href="./app/data/delete">Delete Account</a>
+            </div>
+        </footer>
+
+        <!-- React + Babel for Tweaks panel only -->
+        <div id="tweaks-root"></div>
+        <script
+            src="https://unpkg.com/react@18.3.1/umd/react.development.js"
+            integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"
+            integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"
+            integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y"
+            crossorigin="anonymous"
+        ></script>
+        <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+        <script type="text/babel">
+            const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/ {
+                theme: "yellow",
+                tickerSpeed: "normal",
+                showFloatingCards: true,
+            }; /*EDITMODE-END*/
+
+            const THEMES = {
+                yellow: {
+                    bg: "#FEEEC3",
+                    yellow: "#FFD966",
+                    dkYellow: "#FCD150",
+                    green: "#D2FFB6",
+                    pink: "#FFC0B6",
+                    purple: "#E3B6FF",
+                    blue: "#B6EAFF",
+                    ltBlue: "#C8EBFF",
+                    tagPurple: "#9191FF",
+                    ossBg: "#E3B6FF",
+                },
+                mint: {
+                    bg: "#E6FAF0",
+                    yellow: "#7EE8A2",
+                    dkYellow: "#5FD68A",
+                    green: "#B6FFD6",
+                    pink: "#FFB6D9",
+                    purple: "#D4B6FF",
+                    blue: "#B6E4FF",
+                    ltBlue: "#C8F0FF",
+                    tagPurple: "#6B6BFF",
+                    ossBg: "#D4B6FF",
+                },
+                lavender: {
+                    bg: "#F0ECFF",
+                    yellow: "#BFB0FF",
+                    dkYellow: "#A899FF",
+                    green: "#B6FFD9",
+                    pink: "#FFB6DE",
+                    purple: "#D9B6FF",
+                    blue: "#B6D4FF",
+                    ltBlue: "#C8DBFF",
+                    tagPurple: "#7B5FFF",
+                    ossBg: "#D9B6FF",
+                },
+            };
+
+            function applyTheme(t) {
+                const c = THEMES[t] || THEMES.yellow;
+                const r = document.documentElement.style;
+                r.setProperty("--bg", c.bg);
+                r.setProperty("--yellow", c.yellow);
+                r.setProperty("--dk-yellow", c.dkYellow);
+                r.setProperty("--green", c.green);
+                r.setProperty("--pink", c.pink);
+                r.setProperty("--purple", c.purple);
+                r.setProperty("--blue", c.blue);
+                r.setProperty("--lt-blue", c.ltBlue);
+                r.setProperty("--tag-purple", c.tagPurple);
+                document.querySelector(".oss-out").style.background = c.ossBg;
+            }
+
+            function applyTickerSpeed(s) {
+                const dur = s === "slow" ? "42s" : s === "fast" ? "14s" : "28s";
+                document.querySelector(
+                    ".ticker-track",
+                ).style.animationDuration = dur;
+            }
+
+            function applyCards(show) {
+                document
+                    .querySelectorAll(".icard")
+                    .forEach((el) => (el.style.display = show ? "" : "none"));
+            }
+
+            function TweaksApp() {
+                const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+                React.useEffect(() => {
+                    applyTheme(tweaks.theme);
+                }, [tweaks.theme]);
+                React.useEffect(() => {
+                    applyTickerSpeed(tweaks.tickerSpeed);
+                }, [tweaks.tickerSpeed]);
+                React.useEffect(() => {
+                    applyCards(tweaks.showFloatingCards);
+                }, [tweaks.showFloatingCards]);
+
+                const SWATCH_OPTIONS = [
+                    { id: "yellow", colors: ["#FFD966", "#FEEEC3", "#D2FFB6"] },
+                    { id: "mint", colors: ["#7EE8A2", "#E6FAF0", "#B6FFD6"] },
+                    {
+                        id: "lavender",
+                        colors: ["#BFB0FF", "#F0ECFF", "#D4B6FF"],
+                    },
+                ];
+
+                return (
+                    <TweaksPanel>
+                        <TweakSection label="App Theme">
+                            <div style={{ display: "flex", gap: 10 }}>
+                                {SWATCH_OPTIONS.map((o) => (
+                                    <div
+                                        key={o.id}
+                                        onClick={() => setTweak("theme", o.id)}
+                                        style={{
+                                            width: 48,
+                                            height: 48,
+                                            cursor: "pointer",
+                                            border: "2px solid",
+                                            borderColor:
+                                                tweaks.theme === o.id
+                                                    ? "#0A0A0A"
+                                                    : "rgba(0,0,0,0.15)",
+                                            boxShadow:
+                                                tweaks.theme === o.id
+                                                    ? "2px 2px 0 #0A0A0A"
+                                                    : "none",
+                                            borderRadius: 3,
+                                            overflow: "hidden",
+                                            position: "relative",
+                                            transform:
+                                                tweaks.theme === o.id
+                                                    ? "translate(-1px,-1px)"
+                                                    : "none",
+                                            transition:
+                                                "transform 0.15s, box-shadow 0.15s",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                height: "60%",
+                                                background: o.colors[0],
+                                            }}
+                                        ></div>
+                                        <div
+                                            style={{
+                                                height: "40%",
+                                                background: o.colors[1],
+                                                display: "flex",
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    flex: 1,
+                                                    background: o.colors[2],
+                                                }}
+                                            ></div>
+                                            <div
+                                                style={{
+                                                    flex: 1,
+                                                    background: o.colors[0],
+                                                    opacity: 0.5,
+                                                }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div
+                                style={{
+                                    marginTop: 8,
+                                    fontSize: 11,
+                                    opacity: 0.55,
+                                    textTransform: "capitalize",
+                                    letterSpacing: "0.04em",
+                                }}
+                            >
+                                {tweaks.theme} theme
+                            </div>
+                        </TweakSection>
+
+                        <TweakSection label="Ticker Speed">
+                            <TweakRadio
+                                value={tweaks.tickerSpeed}
+                                options={["slow", "normal", "fast"]}
+                                onChange={(v) => setTweak("tickerSpeed", v)}
+                            />
+                        </TweakSection>
+
+                        <TweakSection label="Hero Cards">
+                            <TweakToggle
+                                label="Show floating cards"
+                                value={tweaks.showFloatingCards}
+                                onChange={(v) =>
+                                    setTweak("showFloatingCards", v)
+                                }
+                            />
+                        </TweakSection>
+                    </TweaksPanel>
+                );
+            }
+
+            ReactDOM.createRoot(document.getElementById("tweaks-root")).render(
+                <TweaksApp />,
+            );
+        </script>
+
+        <script>
+            // Scroll reveal
+            const obs = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((e) => {
+                        if (e.isIntersecting) e.target.classList.add("in");
+                    });
+                },
+                { threshold: 0.08 },
+            );
+            document.querySelectorAll(".r").forEach((el) => obs.observe(el));
+        </script>
+    </body>
+</html>

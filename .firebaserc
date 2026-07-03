@@ -1,0 +1,21 @@
+{
+  "projects": {
+    "default": "collegesapiens"
+  },
+  "targets": {
+    "collegesapiens": {
+      "hosting": {
+        "app1": [
+          "collegesapiens"
+        ],
+        "admin": [
+          "admin-collegesapiens"
+        ],
+        "app2": [
+          "codesapiens"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
