@@ -1,13 +1,7 @@
 name: Deploy Firebase Functions on merge
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'server/functions/**'
-      - 'server/firebase.json'
-      - 'server/.firebaserc'
+  workflow_dispatch:
 
 jobs:
   deploy_functions:

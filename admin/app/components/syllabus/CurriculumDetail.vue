@@ -31,6 +31,7 @@ const emit = defineEmits<{
   close: [];
   approve: [id: string];
   reject: [id: string];
+  delete: [id: string];
   save: [
     payload: {
       id: string;
@@ -156,6 +157,10 @@ const handleSubjectSave = (subject: CurriculumSubject) => {
 const deleteSubject = (index: number) => {
   editSubjects.value.splice(index, 1);
 };
+
+const handleDelete = () => {
+  emit("delete", props.curriculum.id);
+};
 </script>
 
 <template>
@@ -213,6 +218,15 @@ const deleteSubject = (index: number) => {
             @click="startEdit"
           >
             Edit
+          </button>
+          <button
+            v-if="!editMode && curriculum.status === 'approved' && !isAmbassador"
+            class="px-3 py-1.5 text-xs font-medium border border-red-300 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1"
+            title="Delete Curriculum"
+            @click="handleDelete"
+          >
+            <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
+            Delete
           </button>
           <button
             class="p-1 text-gray-400 hover:text-gray-700"

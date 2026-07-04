@@ -388,6 +388,10 @@ const downloadCSV = (item: CurriculumRecord) => {
 };
 
 const handleDeleteCurriculum = async (id: string) => {
+  if (isAmbassador.value) {
+    alert("Ambassadors do not have permission to delete curricula.");
+    return;
+  }
   if (
     !confirm(
       "Are you sure you want to delete this curriculum? This action is permanent and cannot be undone.",
@@ -397,6 +401,7 @@ const handleDeleteCurriculum = async (id: string) => {
   try {
     await apiDelete(`/curriculum/admin/${id}`);
     approved.value = approved.value.filter((item) => item.id !== id);
+    detailItem.value = null;
     snack.value = "Curriculum deleted successfully.";
   } catch (err) {
     console.error("Failed to delete curriculum", err);
@@ -763,6 +768,7 @@ const handleSaveEdit = async (payload: {
               <th class="py-2 px-4 font-medium">Course</th>
               <th class="py-2 px-4 font-medium">Regulation</th>
               <th class="py-2 px-4 font-medium">Subjects</th>
+              <th class="py-2 px-4 font-medium w-20">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -787,6 +793,15 @@ const handleSaveEdit = async (payload: {
               <td class="py-2 px-4 text-gray-500">{{ row.regulation }}</td>
               <td class="py-2 px-4 text-gray-500">
                 {{ row.subjects.length }}
+              </td>
+              <td class="py-2 px-4" @click.stop>
+                <button
+                  class="p-1.5 border border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
+                  title="View Details"
+                  @click="detailItem = row"
+                >
+                  <Icon name="i-heroicons-eye" class="w-4 h-4" />
+                </button>
               </td>
             </tr>
           </tbody>
@@ -813,7 +828,7 @@ const handleSaveEdit = async (payload: {
               <th class="py-2 px-4 font-medium">Course</th>
               <th class="py-2 px-4 font-medium">Regulation</th>
               <th class="py-2 px-4 font-medium">Subjects</th>
-              <th class="py-2 px-4 font-medium w-36">Actions</th>
+              <th class="py-2 px-4 font-medium w-28">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -829,25 +844,20 @@ const handleSaveEdit = async (payload: {
               <td class="py-2 px-4 text-gray-500">
                 {{ row.subjects.length }}
               </td>
-              <td class="py-2 px-4 flex gap-3" @click.stop>
+              <td class="py-2 px-4 flex gap-2" @click.stop>
                 <button
-                  class="inline-flex items-center gap-1 text-xs text-yellow-600 hover:text-yellow-700 font-medium transition-colors"
+                  class="p-1.5 border border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
+                  title="View Details"
+                  @click="detailItem = row"
+                >
+                  <Icon name="i-heroicons-eye" class="w-4 h-4" />
+                </button>
+                <button
+                  class="p-1.5 border border-yellow-300 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors flex items-center justify-center"
                   title="Download CSV"
                   @click="downloadCSV(row)"
                 >
-                  <Icon
-                    name="i-heroicons-arrow-down-tray"
-                    class="w-3.5 h-3.5"
-                  />
-                  Download CSV
-                </button>
-                <button
-                  class="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium transition-colors"
-                  title="Delete Curriculum"
-                  @click="handleDeleteCurriculum(row.id)"
-                >
-                  <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
-                  Delete
+                  <Icon name="i-heroicons-arrow-down-tray" class="w-4 h-4" />
                 </button>
               </td>
             </tr>
@@ -880,6 +890,7 @@ const handleSaveEdit = async (payload: {
       @approve="approveOne"
       @reject="rejectOne"
       @save="handleSaveEdit"
+      @delete="handleDeleteCurriculum"
     />
 
     <!-- Guide Modal -->
