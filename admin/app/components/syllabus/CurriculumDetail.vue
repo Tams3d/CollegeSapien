@@ -1,19 +1,12 @@
 <script setup lang="ts">
 interface CurriculumSubject {
-  semester: string;
-  parent_semester?: number | null;
+  semester: number | null;
   subject_code?: string;
   subject_name: string;
-  course_type?: string;
-  l_t_p?: string;
-  tcp?: number | null;
   credits?: number | null;
   category?: string;
-  is_elective?: boolean;
   elective_type?: string | null;
   record_type?: string;
-  elective_stream?: string | null;
-  options_from?: string | null;
 }
 
 interface Curriculum {
@@ -134,20 +127,13 @@ const openAddSubject = (defaults: Partial<CurriculumSubject>) => {
   subjectModal.value = {
     index: null,
     subject: {
-      semester: "",
+      semester: null,
       subject_name: "",
       subject_code: "",
-      course_type: "",
-      l_t_p: "",
-      tcp: null,
       credits: null,
       category: "",
-      is_elective: false,
       elective_type: null,
       record_type: "core",
-      elective_stream: null,
-      options_from: null,
-      parent_semester: null,
       ...defaults,
     },
   };
@@ -251,8 +237,7 @@ const deleteSubject = (index: number) => {
               class="text-xs text-yellow-700 hover:text-yellow-800 font-medium"
               @click="
                 openAddSubject({
-                  semester: String(semester),
-                  parent_semester: null,
+                  semester: semester,
                   record_type: 'core',
                 })
               "
@@ -265,7 +250,6 @@ const deleteSubject = (index: number) => {
               <tr class="text-left text-gray-400 border-b border-gray-100">
                 <th class="py-1.5 pr-2 font-medium">Code</th>
                 <th class="py-1.5 pr-2 font-medium">Name</th>
-                <th class="py-1.5 pr-2 font-medium">L-T-P</th>
                 <th class="py-1.5 pr-2 font-medium">Credits</th>
                 <th class="py-1.5 pr-2 font-medium">Category</th>
                 <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
@@ -283,13 +267,10 @@ const deleteSubject = (index: number) => {
                 <td class="py-1.5 pr-2 text-gray-900">
                   {{ row.subject.subject_name }}
                   <span
-                    v-if="row.subject.record_type === 'slot'"
+                    v-if="row.subject.record_type === 'elective'"
                     class="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full"
-                    >Elective slot</span
+                    >Elective</span
                   >
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.l_t_p || "—" }}
                 </td>
                 <td class="py-1.5 pr-2 text-gray-500">
                   {{ row.subject.credits ?? "—" }}
@@ -330,10 +311,9 @@ const deleteSubject = (index: number) => {
               class="text-xs text-yellow-700 hover:text-yellow-800 font-medium"
               @click="
                 openAddSubject({
-                  semester: pool,
+                  semester: null,
                   record_type: 'option',
                   elective_type: pool,
-                  is_elective: true,
                 })
               "
             >
@@ -344,7 +324,7 @@ const deleteSubject = (index: number) => {
             <thead>
               <tr class="text-left text-gray-400 border-b border-gray-100">
                 <th class="py-1.5 pr-2 font-medium">Name</th>
-                <th class="py-1.5 pr-2 font-medium">Stream</th>
+                <th class="py-1.5 pr-2 font-medium">Category</th>
                 <th class="py-1.5 pr-2 font-medium">Credits</th>
                 <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
               </tr>
@@ -359,7 +339,7 @@ const deleteSubject = (index: number) => {
                   {{ row.subject.subject_name }}
                 </td>
                 <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.elective_stream || "—" }}
+                  {{ row.subject.category || "—" }}
                 </td>
                 <td class="py-1.5 pr-2 text-gray-500">
                   {{ row.subject.credits ?? "—" }}

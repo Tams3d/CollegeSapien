@@ -204,6 +204,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
+  Future<void> _refreshSubjects() async {
+    final collegeId = _selectedCollegeId;
+    final dept = _selectedDepartment;
+    if (collegeId == null || dept == null) return;
+
+    final college = _colleges.where((c) => c.id == collegeId).firstOrNull;
+    final courseCode =
+        departments.where((d) => d.name == dept).firstOrNull?.code;
+
+    try {
+      if (college != null && courseCode != null) {
+        await _syllabusService.clearCurriculumCache(
+          collegeCode: college.code,
+          courseCode: courseCode,
+        );
+      }
+      await _loadSubjectsPreview();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Curriculum cache refreshed and subjects reloaded!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to refresh: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<bool> _confirmAcademicDataReset() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -564,12 +602,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
           ),
-          if (showEditor)
+          if (showEditor) ...[
+            IconButton(
+              onPressed: _refreshSubjects,
+              icon: const Icon(Icons.refresh, color: Colors.black),
+              tooltip: 'Refresh subjects',
+            ),
             IconButton(
               onPressed: _editorController.showAddSubjectSheet,
               icon: const Icon(Icons.add_circle_outline, color: Colors.black),
               tooltip: 'Add subject',
             ),
+          ],
         ],
       ),
       const SizedBox(height: 8),

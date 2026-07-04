@@ -36,11 +36,7 @@ class SubjectsEditorController {
         credits: e.editedCredits ?? src.credits,
         electiveType: e.subject.electiveType,
         isElective: e.subject.isElective,
-        courseType: src.courseType.isNotEmpty ? src.courseType : null,
-        ltp: src.ltp.isNotEmpty ? src.ltp : null,
-        tcp: src.tcp,
         category: src.category.isNotEmpty ? src.category : null,
-        electiveStream: opt?.electiveStream,
       );
     }).toList();
   }
@@ -129,7 +125,7 @@ class _SubjectsEditorState extends State<SubjectsEditor> {
         semester: widget.semester,
       );
       final optionPools = curriculumSubjects
-          .where((s) => s.isSlot && s.electiveType != null)
+          .where((s) => s.isElectiveSlot && s.electiveType != null)
           .map((s) => s.electiveType!)
           .toSet();
       for (final pool in optionPools) {
@@ -148,17 +144,13 @@ class _SubjectsEditorState extends State<SubjectsEditor> {
           collegeCode: widget.collegeCode ?? '',
           courseCode: widget.courseCode ?? '',
           regulation: _regulation ?? '',
-          semester: '${widget.semester}',
+          semester: widget.semester,
           subjectCode: sv.subjectCode,
           subjectName: sv.subjectName,
-          courseType: sv.courseType ?? '',
-          ltp: sv.ltp ?? '',
           credits: sv.credits,
-          tcp: sv.tcp,
           category: sv.category ?? '',
-          isElective: sv.isElective,
           electiveType: sv.electiveType,
-          recordType: sv.isElective ? 'slot' : 'core',
+          recordType: sv.isElective ? 'elective' : 'core',
         );
         CurriculumSubject? matchedOption;
         if (sv.isElective && sv.electiveType != null) {
@@ -271,14 +263,11 @@ class _SubjectsEditorState extends State<SubjectsEditor> {
                         collegeCode: '',
                         courseCode: '',
                         regulation: _regulation ?? '',
-                        semester: '${widget.semester}',
+                        semester: widget.semester,
                         subjectCode: '',
                         subjectName: name,
-                        courseType: '',
-                        ltp: '',
                         credits: credits,
                         category: '',
-                        isElective: isElective,
                         recordType: 'core',
                       );
                       setState(() {
@@ -451,8 +440,8 @@ class _SubjectsEditorState extends State<SubjectsEditor> {
 
   Widget _buildSubjectCard(_SubjectEntry entry, int index) {
     final subject = entry.subject;
-    final isSlot = subject.isSlot;
-    final hasOptions = isSlot &&
+    final isElectiveSlot = subject.isElectiveSlot;
+    final hasOptions = isElectiveSlot &&
         subject.electiveType != null &&
         (_electiveOptions[subject.electiveType]?.isNotEmpty ?? false);
     final color =
@@ -523,8 +512,8 @@ class _SubjectsEditorState extends State<SubjectsEditor> {
                   runSpacing: 6,
                   children: [
                     if (displayCredits != null) _chip('$displayCredits credits'),
-                    if (entry.selectedOption?.electiveStream != null)
-                      _chip(entry.selectedOption!.electiveStream!),
+                     if (entry.selectedOption?.category != null && entry.selectedOption!.category.isNotEmpty)
+                       _chip(entry.selectedOption!.category),
                   ],
                 ),
               ),
@@ -578,7 +567,7 @@ class _SubjectsEditorState extends State<SubjectsEditor> {
       items: options,
       value: currentValue,
       labelBuilder: (opt) =>
-          '${opt.subjectName}${opt.electiveStream != null ? '  (${opt.electiveStream})' : ''}',
+          '${opt.subjectName}${opt.category.isNotEmpty ? '  (${opt.category})' : ''}',
       decoration: InputDecoration(
         isDense: true,
         contentPadding:

@@ -61,12 +61,26 @@ class SyllabusService {
     }
   }
 
+  Future<void> clearCurriculumCache({
+    required String collegeCode,
+    required String courseCode,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+    final prefix = 'curriculum_${collegeCode}_$courseCode';
+    for (final key in keys) {
+      if (key.startsWith(prefix)) {
+        await prefs.remove(key);
+      }
+    }
+  }
+
   List<CurriculumSubject> getSubjectsForSemester(
     CurriculumBundle bundle, {
     required int semester,
   }) {
     return bundle.subjects
-        .where((s) => s.effectiveSemester == semester && !s.isOption)
+        .where((s) => s.semester == semester && !s.isOption)
         .toList();
   }
 

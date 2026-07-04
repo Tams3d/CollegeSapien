@@ -348,9 +348,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         credits: s.credits,
                         isElective: s.isElective,
                         electiveType: s.electiveType,
-                        courseType: s.courseType,
-                        ltp: s.ltp,
-                        tcp: s.tcp,
                         category: s.category,
                       ))
                   .toList();
@@ -1279,8 +1276,7 @@ class _HomeScreenState extends State<HomeScreen> {
           final color = s.isElective
               ? AppColors.accentPurple
               : _cardColors[i % _cardColors.length];
-          final typeLabel = s.courseType?.toUpperCase() ??
-              (s.isElective ? 'ELECTIVE' : 'THEORY');
+          final typeLabel = s.isElective ? 'ELECTIVE' : 'THEORY';
           return Container(
             width: 155,
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
