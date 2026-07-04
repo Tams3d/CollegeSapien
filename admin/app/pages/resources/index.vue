@@ -19,6 +19,8 @@ interface Resource {
 }
 
 const { get, patch, delete: apiDelete } = useApi();
+const authStore = useAuthStore();
+const isAmbassador = computed(() => authStore.user?.role === "ambassador");
 
 const stats = ref<Stats | null>(null);
 const statsLoading = ref(true);
@@ -49,6 +51,10 @@ const fetchResources = async () => {
 };
 
 const archive = async (id: string) => {
+  if (isAmbassador.value) {
+    alert("Ambassadors do not have permission to archive resources.");
+    return;
+  }
   actionInFlight.value.add(id);
   try {
     await apiDelete(`/admin/resources/${id}`);
@@ -247,7 +253,7 @@ watch([tab, categoryFilter], fetchResources);
             Open File
           </a>
           <button
-            v-if="tab === 'approved'"
+            v-if="tab === 'approved' && !isAmbassador"
             :disabled="actionInFlight.has(resource.id)"
             class="px-3 py-1.5 text-xs font-medium border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-60 transition-colors"
             @click="archive(resource.id)"

@@ -46,6 +46,8 @@ const emit = defineEmits<{
 }>();
 
 const editMode = ref(false);
+const authStore = useAuthStore();
+const isAmbassador = computed(() => authStore.user?.role === "ambassador");
 const editHeader = reactive({
   college: "",
   collegeCode: "",
@@ -401,6 +403,7 @@ const deleteSubject = (index: number) => {
             Reject
           </button>
           <button
+            v-if="!isAmbassador"
             :disabled="actionInFlight"
             class="px-4 py-2 text-sm bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:opacity-60 transition-colors"
             @click="emit('approve', curriculum.id)"
