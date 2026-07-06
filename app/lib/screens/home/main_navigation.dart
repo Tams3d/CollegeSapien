@@ -32,6 +32,9 @@ class _MainNavigationState extends State<MainNavigation>
   // tabs, while still giving rail items outside its subtree (_profileRailItem)
   // a stable handle to push onto it imperatively.
   GlobalKey<NavigatorState> _contentNavKey = GlobalKey<NavigatorState>();
+  // True while Profile is the screen showing in the content pane, so the
+  // rail can highlight "Profile" instead of leaving the last tab active.
+  bool _profileActive = false;
 
   static const _navItems = [
     (icon: Icons.home_outlined, label: 'Home'),
@@ -75,6 +78,7 @@ class _MainNavigationState extends State<MainNavigation>
     setState(() {
       _currentIndex = index;
       _contentNavKey = GlobalKey<NavigatorState>();
+      _profileActive = false;
       if (index == 1) _attendanceRefreshToken += 1;
     });
     _fadeCtrl.forward();
@@ -287,19 +291,22 @@ class _MainNavigationState extends State<MainNavigation>
           )
         : const Center(child: icon);
 
-    Widget itemWidget = Hoverable(
-      builder: (context, hovered) => AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: hovered
-              ? Colors.black.withValues(alpha: 0.06)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: rowContent,
-      ),
-    );
+    Widget itemWidget = _profileActive
+        ? _activeRailChrome(rowContent)
+        : Hoverable(
+            builder: (context, hovered) => AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: hovered
+                    ? Colors.black.withValues(alpha: 0.06)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: rowContent,
+            ),
+          );
 
     if (!expanded) {
       itemWidget = Tooltip(message: 'Profile', child: itemWidget);
@@ -316,11 +323,13 @@ class _MainNavigationState extends State<MainNavigation>
           // the nested one — push onto it explicitly via its key instead.
           final nav = _contentNavKey.currentState;
           final route = MaterialPageRoute(builder: (_) => const ProfileScreen());
-          if (nav != null) {
-            nav.push(route);
-          } else {
-            Navigator.push(context, route);
-          }
+          setState(() => _profileActive = true);
+          final pushed = nav != null
+              ? nav.push(route)
+              : Navigator.push(context, route);
+          pushed.then((_) {
+            if (mounted) setState(() => _profileActive = false);
+          });
         },
         child: itemWidget,
       ),
@@ -328,7 +337,7 @@ class _MainNavigationState extends State<MainNavigation>
   }
 
   Widget _railItem(int index, {required bool expanded}) {
-    final isActive = _currentIndex == index;
+    final isActive = _currentIndex == index && !_profileActive;
     final item = _navItems[index];
 
     final icon = Icon(item.icon, size: 24, color: Colors.black);
@@ -350,39 +359,7 @@ class _MainNavigationState extends State<MainNavigation>
         : Center(child: icon);
 
     Widget itemWidget = isActive
-        ? Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(offset: Offset(2, 2), color: Colors.black),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(7),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                color: AppColors.navigationBlue,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned.fill(
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          _navStripe(left: 40, top: -34, width: 10),
-                          _navStripe(left: -10, top: -18, width: 8),
-                          _navStripe(left: 65, top: -20, width: 6),
-                        ],
-                      ),
-                    ),
-                    rowContent,
-                  ],
-                ),
-              ),
-            ),
-          )
+        ? _activeRailChrome(rowContent)
         : Hoverable(
             builder: (context, hovered) => AnimatedContainer(
               duration: const Duration(milliseconds: 150),
@@ -408,6 +385,44 @@ class _MainNavigationState extends State<MainNavigation>
         onTap: () => _onTab(index),
         behavior: HitTestBehavior.opaque,
         child: itemWidget,
+      ),
+    );
+  }
+
+  /// Shared shine-stripe "active" chrome used by both the 4 main rail items
+  /// and the pinned Profile item, so a pushed Profile screen can highlight
+  /// itself the same way an active tab does.
+  Widget _activeRailChrome(Widget rowContent) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.black),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(offset: Offset(2, 2), color: Colors.black),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(7),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          color: AppColors.navigationBlue,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    _navStripe(left: 40, top: -34, width: 10),
+                    _navStripe(left: -10, top: -18, width: 8),
+                    _navStripe(left: 65, top: -20, width: 6),
+                  ],
+                ),
+              ),
+              rowContent,
+            ],
+          ),
+        ),
       ),
     );
   }
