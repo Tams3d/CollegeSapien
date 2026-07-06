@@ -10,6 +10,8 @@ import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/responsive_layout.dart';
+import '../../widgets/resource_grid_section.dart';
 
 class NotesHubScreen extends StatefulWidget {
   const NotesHubScreen({super.key});
@@ -320,7 +322,9 @@ class _NotesHubScreenState extends State<NotesHubScreen> {
                     return matchesSubject && matchesSearch;
                   }).toList();
 
-                  return ListView(
+                  return MaxWidthContent(
+                    maxWidth: 1000,
+                    child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
                       // Search field
@@ -404,9 +408,12 @@ class _NotesHubScreenState extends State<NotesHubScreen> {
                       if (resources.isEmpty)
                         _buildEmptyState()
                       else
-                        ...resources
-                            .map((resource) => _buildResourceCard(resource)),
+                        ResourceGridSection(
+                          items: resources,
+                          cardBuilder: _buildResourceCard,
+                        ),
                     ],
+                    ),
                   );
                 },
               ),
@@ -451,9 +458,9 @@ class _NotesHubScreenState extends State<NotesHubScreen> {
     );
   }
 
-  Widget _buildResourceCard(HubResource resource) {
+  Widget _buildResourceCard(HubResource resource, {bool includeMargin = true}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: includeMargin ? const EdgeInsets.only(bottom: 16) : null,
       padding: const EdgeInsets.all(20),
       decoration: AppTheme.cardDecoration(color: AppColors.accentBlue),
       child: Column(

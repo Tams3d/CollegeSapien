@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_constants.dart';
+import '../../utils/app_spacing.dart';
+import '../../widgets/responsive_layout.dart';
 import '../../services/academic_service.dart';
 import '../../services/api_service.dart';
 
@@ -290,184 +292,231 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.all(screenWidth * 0.045),
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-
-                  // CGPA Display
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(40),
-                    decoration: AppTheme.cardDecoration(
-                      color: AppColors.primaryYellow,
-                      shadowOffset: const Offset(8, 8),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.stars, size: 60),
-                        const SizedBox(height: 20),
-                        Text(
-                          _semesters.isEmpty ? '--' : cgpa.toStringAsFixed(2),
-                          style: const TextStyle(
-                            fontFamily: 'Lexend Mega',
-                            fontSize: 60,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Current CGPA',
-                          style: TextStyle(
-                            fontFamily: 'Public Sans',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: AppTheme.badgeDecoration(
-                              color: AppColors.accentGreen),
-                          child: Text(
-                            _getMotivationalMessage(),
-                            style: const TextStyle(
-                              fontFamily: 'Public Sans',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Upload Grade Sheet Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: _isScanning ? null : _uploadGradeSheet,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accentBlue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: const BorderSide(color: Colors.black, width: 2),
-                        ),
-                      ),
-                      icon: const Icon(Icons.camera_alt, color: Colors.black),
-                      label: const Text(
-                        'Scan Grade Sheet with AI',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Semester Breakdown Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Semester Breakdown',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF191C1E),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _showAddSemesterDialog,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: AppTheme.cardDecoration(
-                            color: AppColors.accentGreen,
-                            shadowOffset: const Offset(2, 2),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.add, size: 16),
-                              SizedBox(width: 4),
-                              Text(
-                                'Add Semester',
-                                style: TextStyle(
-                                  fontFamily: 'Public Sans',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  if (_semesters.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration:
-                          AppTheme.cardDecoration(color: AppColors.accentBlue),
-                      child: const Text(
-                        'No semesters yet. Add your semester GPA and credits to calculate your CGPA.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontFamily: 'Public Sans',
-                            fontWeight: FontWeight.w600),
-                      ),
-                    )
-                  else
-                    ...List.generate(
-                        _semesters.length, (i) => _buildSemesterCard(i)),
-
-                  const SizedBox(height: 80),
-                ],
-              ),
+            ResponsiveLayout(
+              mobile: (_) => _mobileBody(screenWidth, cgpa),
+              desktop: (_) => _desktopBody(context, cgpa),
             ),
+            if (_isScanning) _loadingOverlay(),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Loading Overlay
-            if (_isScanning)
-              Container(
-                color: Colors.black54,
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.primaryYellow),
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Analyzing grade sheet...\nGemini AI is working...',
-                        style: TextStyle(
-                          fontFamily: 'Public Sans',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
+  Widget _mobileBody(double screenWidth, double cgpa) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(screenWidth * 0.045),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          _summaryCard(cgpa),
+          const SizedBox(height: 30),
+          _uploadButton(),
+          const SizedBox(height: 30),
+          _semesterBreakdownHeader(),
+          const SizedBox(height: 16),
+          _semesterList(),
+          const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+
+  // Desktop: entries (upload button + semester list) scroll on the left;
+  // the computed CGPA stays as a persistent, non-scrolling summary panel on
+  // the right instead of requiring a scroll back to the top to see it.
+  Widget _desktopBody(BuildContext context, double cgpa) {
+    final width = MediaQuery.of(context).size.width;
+    return Padding(
+      padding: EdgeInsets.all(AppSpacing.pagePadding(width)),
+      child: MaxWidthContent(
+        maxWidth: 960,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _uploadButton(),
+                    const SizedBox(height: 30),
+                    _semesterBreakdownHeader(),
+                    const SizedBox(height: 16),
+                    _semesterList(),
+                    const SizedBox(height: 40),
+                  ],
                 ),
               ),
+            ),
+            SizedBox(width: AppSpacing.xl),
+            SizedBox(width: 320, child: _summaryCard(cgpa)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _summaryCard(double cgpa) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(40),
+      decoration: AppTheme.cardDecoration(
+        color: AppColors.primaryYellow,
+        shadowOffset: const Offset(8, 8),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.stars, size: 60),
+          const SizedBox(height: 20),
+          Text(
+            _semesters.isEmpty ? '--' : cgpa.toStringAsFixed(2),
+            style: const TextStyle(
+              fontFamily: 'Lexend Mega',
+              fontSize: 60,
+              fontWeight: FontWeight.w700,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Current CGPA',
+            style: TextStyle(
+              fontFamily: 'Public Sans',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: AppTheme.badgeDecoration(color: AppColors.accentGreen),
+            child: Text(
+              _getMotivationalMessage(),
+              style: const TextStyle(
+                fontFamily: 'Public Sans',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _uploadButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton.icon(
+        onPressed: _isScanning ? null : _uploadGradeSheet,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.accentBlue,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: Colors.black, width: 2),
+          ),
+        ),
+        icon: const Icon(Icons.camera_alt, color: Colors.black),
+        label: const Text(
+          'Scan Grade Sheet with AI',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _semesterBreakdownHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Semester Breakdown',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF191C1E),
+          ),
+        ),
+        GestureDetector(
+          onTap: _showAddSemesterDialog,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: AppTheme.cardDecoration(
+              color: AppColors.accentGreen,
+              shadowOffset: const Offset(2, 2),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  'Add Semester',
+                  style: TextStyle(
+                    fontFamily: 'Public Sans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _semesterList() {
+    if (_semesters.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: AppTheme.cardDecoration(color: AppColors.accentBlue),
+        child: const Text(
+          'No semesters yet. Add your semester GPA and credits to calculate your CGPA.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: 'Public Sans', fontWeight: FontWeight.w600),
+        ),
+      );
+    }
+    return Column(
+      children:
+          List.generate(_semesters.length, (i) => _buildSemesterCard(i)),
+    );
+  }
+
+  Widget _loadingOverlay() {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(AppColors.primaryYellow),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Analyzing grade sheet...\nGemini AI is working...',
+              style: TextStyle(
+                fontFamily: 'Public Sans',
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

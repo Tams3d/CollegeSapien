@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 import '../../services/college_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/department_constants.dart';
+import '../../widgets/responsive_layout.dart';
 import '../../widgets/searchable_dropdown.dart';
 import '../home/main_navigation.dart';
 
@@ -173,7 +174,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                 horizontal: screenWidth * 0.06,
                 vertical: 40,
               ),
-              child: Form(
+              child: MaxWidthContent(
+                maxWidth: 480,
+                child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,6 +321,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen>
                     ),
                   ],
                 ),
+              ),
               ),
             ),
           ],

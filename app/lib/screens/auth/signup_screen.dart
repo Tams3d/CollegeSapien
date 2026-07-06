@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/responsive_layout.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../home/main_navigation.dart';
 import 'login_screen.dart';
@@ -98,11 +99,32 @@ class _SignupScreenState extends State<SignupScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
+        child: ResponsiveLayout(
+          mobile: (_) => SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: 24),
+            child: Form(key: _formKey, child: _formColumn()),
+          ),
+          desktop: (_) => Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Container(
+                width: 460,
+                padding: const EdgeInsets.all(32),
+                decoration: AppTheme.cardDecoration(
+                  color: Colors.white,
+                  shadowOffset: const Offset(6, 6),
+                ),
+                child: Form(key: _formKey, child: _formColumn()),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _formColumn() {
+    return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Back button
@@ -384,10 +406,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 32),
               ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 

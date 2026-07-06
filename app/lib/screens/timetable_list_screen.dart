@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/timetable_models.dart';
 import '../services/cache_service.dart';
 import '../services/timetable_service.dart';
+import '../utils/breakpoints.dart';
+import '../utils/app_spacing.dart';
+import '../widgets/hoverable.dart';
+import '../widgets/responsive_layout.dart';
 import 'timetable_detail_screen.dart';
 
 class TimetableListScreen extends StatefulWidget {
@@ -15,6 +19,9 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
   final TimetableService _timetableService = TimetableService();
   List<TimetableSubject> _subjects = [];
   bool _isLoading = true;
+  // Selected subject for the desktop master-detail split view (unused on
+  // mobile/tablet, which keep push/pop navigation to TimetableDetailScreen).
+  TimetableSubject? _selectedSubject;
 
   @override
   void initState() {
@@ -67,16 +74,8 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
     final types = ['CORE', 'LAB', 'BREAK'];
     bool isSaving = false;
 
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFFFFF8E4),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        side: BorderSide(color: Colors.black, width: 2),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
+    Widget buildSheetContent(BuildContext ctx) {
+      return StatefulBuilder(
           builder: (ctx, setSheetState) {
             Future<void> addSlot() async {
               String selectedDay = days.first;
@@ -362,8 +361,39 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
             );
           },
         );
-      },
-    );
+      }
+
+    final width = MediaQuery.of(context).size.width;
+    if (Breakpoints.isAtLeastDesktop(width)) {
+      await showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: const Color(0xFFFFF8E4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Colors.black, width: 2),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560, maxHeight: 680),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: buildSheetContent(ctx),
+            ),
+          ),
+        ),
+      );
+    } else {
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: const Color(0xFFFFF8E4),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          side: BorderSide(color: Colors.black, width: 2),
+        ),
+        builder: buildSheetContent,
+      );
+    }
   }
 
   Future<void> _removeSubject(TimetableSubject subject) async {
@@ -419,6 +449,10 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
   }
 
   void _openTimetableDetail(TimetableSubject subject) {
+    if (Breakpoints.isAtLeastDesktop(MediaQuery.of(context).size.width)) {
+      setState(() => _selectedSubject = subject);
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -429,61 +463,212 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFEEEC3),
       body: SafeArea(
         bottom: false,
-        child: Stack(
-          children: [
-            // Main content
-            Column(
-              children: [
-                // Header
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.045,
-                    vertical: 20,
-                  ),
-                  child: _buildHeader(screenWidth),
-                ),
+        child: ResponsiveLayout(
+          mobile: (_) => _mobileBody(context),
+          desktop: (_) => _desktopSplitView(context),
+        ),
+      ),
+    );
+  }
 
-                // Subject cards list
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _subjects.isEmpty
-                          ? _buildEmptyState()
-                          : ListView.builder(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.045,
-                              ).copyWith(
-                                bottom:
-                                    100 + MediaQuery.of(context).padding.bottom,
-                              ),
-                              itemCount: _subjects.length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 20),
-                                  child: _buildSubjectCard(
-                                    _subjects[index],
-                                    screenWidth,
-                                  ),
-                                );
-                              },
-                            ),
-                ),
-              ],
+  Widget _mobileBody(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Stack(
+      children: [
+        // Main content
+        Column(
+          children: [
+            // Header
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.045,
+                vertical: 20,
+              ),
+              child: _buildHeader(screenWidth),
             ),
 
-            // Floating Action Button for adding a subject manually
-            Positioned(
-              right: 20,
-              bottom: 20,
-              child: _buildAddButton(),
+            // Subject cards list
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _subjects.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.045,
+                          ).copyWith(
+                            bottom:
+                                100 + MediaQuery.of(context).padding.bottom,
+                          ),
+                          itemCount: _subjects.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: _buildSubjectCard(
+                                _subjects[index],
+                                screenWidth,
+                              ),
+                            );
+                          },
+                        ),
             ),
           ],
+        ),
+
+        // Floating Action Button for adding a subject manually
+        Positioned(
+          right: 20,
+          bottom: 20,
+          child: _buildAddButton(),
+        ),
+      ],
+    );
+  }
+
+  // Desktop: master-detail split — subject list on the left, the selected
+  // subject's weekly schedule (TimetableDetailView, no Scaffold/header of
+  // its own) on the right. Mobile/tablet keep the push/pop navigation above
+  // completely unchanged.
+  Widget _desktopSplitView(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_subjects.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(AppSpacing.pagePadding(width)),
+        child: _buildEmptyState(),
+      );
+    }
+
+    final selected = _selectedSubject ?? _subjects.first;
+
+    return Padding(
+      padding: EdgeInsets.all(AppSpacing.pagePadding(width)),
+      child: MaxWidthContent(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 320,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(width),
+                  SizedBox(height: AppSpacing.lg),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: _subjects.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final subject = _subjects[index];
+                        return _buildSubjectListTile(
+                          subject,
+                          subject.id == selected.id,
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: AppSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showSubjectSheet(),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Subject'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD966),
+                        foregroundColor: Colors.black,
+                        side: const BorderSide(color: Colors.black, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: AppSpacing.xl),
+            Expanded(
+              child: TimetableDetailView(
+                key: ValueKey(selected.id),
+                subject: selected,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubjectListTile(TimetableSubject subject, bool isSelected) {
+    return Hoverable(
+      builder: (context, hovered) => GestureDetector(
+        onTap: () => setState(() => _selectedSubject = subject),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFFFFD966)
+                : (hovered ? const Color(0xFFFFF8E4) : Colors.white),
+            border: Border.all(
+                color: Colors.black, width: isSelected ? 2 : 1.5),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                offset: const Offset(2, 2),
+                color: Colors.black.withValues(alpha: isSelected ? 1 : 0.35),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      subject.code,
+                      style: const TextStyle(
+                        fontFamily: 'Lexend Mega',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subject.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Public Sans',
+                        fontSize: 13,
+                        color: Colors.black.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _showSubjectSheet(subject: subject),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.edit_outlined, size: 18),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _removeSubject(subject),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.delete_outline, size: 18),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

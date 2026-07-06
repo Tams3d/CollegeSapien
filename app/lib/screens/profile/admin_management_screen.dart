@@ -5,6 +5,7 @@ import '../../services/admin_service.dart';
 import '../../services/app_capability_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/responsive_layout.dart';
 
 class AdminManagementScreen extends StatefulWidget {
   const AdminManagementScreen({super.key});
@@ -327,7 +328,9 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadData,
-      child: ListView(
+      child: MaxWidthContent(
+        maxWidth: 700,
+        child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Container(
@@ -350,6 +353,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
             _buildUserSection(),
           ],
         ],
+        ),
       ),
     );
   }

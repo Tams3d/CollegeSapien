@@ -8,6 +8,7 @@ import '../../services/resource_service.dart';
 import '../../providers/app_state_notifier.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/responsive_layout.dart';
 import '../attendance_screen.dart';
 import '../auth/login_screen.dart';
 import '../resources/resources_hub_screen.dart';
@@ -199,7 +200,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             horizontal: screenWidth * 0.045,
             vertical: 16,
           ),
-          child: Column(
+          child: MaxWidthContent(
+            maxWidth: 600,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
@@ -564,6 +567,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

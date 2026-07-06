@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_colors.dart';
+import '../../widgets/responsive_layout.dart';
 import 'dart:async';
 
 class PomodoroTimerScreen extends StatefulWidget {
@@ -143,7 +144,9 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(screenWidth * 0.045),
-          child: Column(
+          child: MaxWidthContent(
+            maxWidth: 560,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
@@ -331,6 +334,7 @@ class _PomodoroTimerScreenState extends State<PomodoroTimerScreen> {
 
               const SizedBox(height: 40),
             ],
+          ),
           ),
         ),
       ),

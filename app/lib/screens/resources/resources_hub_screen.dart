@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 // import '../../services/app_capability_service.dart'; // mod: moved to web admin panel
 import '../../utils/app_theme.dart';
 import '../../utils/app_colors.dart';
+import '../../widgets/hoverable.dart';
+import '../../widgets/responsive_layout.dart';
 // import '../profile/admin_management_screen.dart'; // mod: moved to web admin panel
 import 'syllabus_browser_screen.dart';
 import 'notes_hub_screen.dart';
@@ -45,7 +47,9 @@ class _ResourcesHubScreenState extends State<ResourcesHubScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(screenWidth * 0.045),
-          child: Column(
+          child: MaxWidthContent(
+            maxWidth: 800,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Row(
@@ -186,6 +190,7 @@ class _ResourcesHubScreenState extends State<ResourcesHubScreen> {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),
@@ -200,43 +205,50 @@ class _ResourcesHubScreenState extends State<ResourcesHubScreen> {
     Color color,
     VoidCallback onTap,
   ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: AppTheme.cardDecoration(color: color),
-        child: Row(
-          children: [
-            Icon(icon, size: 40, color: Colors.black),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontFamily: 'Lexend Mega',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+    return Hoverable(
+      builder: (context, hovered) => GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: AppTheme.cardDecoration(
+            color: color,
+            shadowOffset:
+                hovered ? const Offset(6, 6) : const Offset(4, 4),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 40, color: Colors.black),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontFamily: 'Lexend Mega',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontFamily: 'Public Sans',
-                      fontSize: 13,
-                      color: Colors.black.withValues(alpha: 0.7),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontFamily: 'Public Sans',
+                        fontSize: 13,
+                        color: Colors.black.withValues(alpha: 0.7),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 20),
-          ],
+              const Icon(Icons.arrow_forward_ios, size: 20),
+            ],
+          ),
         ),
       ),
     );

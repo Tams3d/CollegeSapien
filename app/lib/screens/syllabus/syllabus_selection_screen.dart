@@ -9,6 +9,7 @@ import '../../services/college_service.dart';
 import '../../services/syllabus_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/responsive_layout.dart';
 import '../../widgets/subjects_editor.dart';
 import '../home/main_navigation.dart';
 
@@ -263,22 +264,25 @@ class _SyllabusSelectionScreenState extends State<SyllabusSelectionScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (_curriculumUnavailable) ...[
-            _curriculumUnavailableBanner(),
-            const SizedBox(height: 16),
+      child: MaxWidthContent(
+        maxWidth: 720,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_curriculumUnavailable) ...[
+              _curriculumUnavailableBanner(),
+              const SizedBox(height: 16),
+            ],
+            SubjectsEditor(
+              semester: _profile?.semester ?? 0,
+              bundle: _bundle,
+              saved: _saved,
+              collegeCode: _collegeCode,
+              courseCode: _courseCode,
+              controller: _editorController,
+            ),
           ],
-          SubjectsEditor(
-            semester: _profile?.semester ?? 0,
-            bundle: _bundle,
-            saved: _saved,
-            collegeCode: _collegeCode,
-            courseCode: _courseCode,
-            controller: _editorController,
-          ),
-        ],
+        ),
       ),
     );
   }
