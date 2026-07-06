@@ -7,6 +7,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_colors.dart';
 import '../../services/academic_service.dart';
+import '../../widgets/responsive_layout.dart';
 
 class ResumeRoastScreen extends StatefulWidget {
   const ResumeRoastScreen({super.key});
@@ -233,7 +234,9 @@ class _ResumeRoastScreenState extends State<ResumeRoastScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(screenWidth * 0.06),
-          child: Column(
+          child: MaxWidthContent(
+            maxWidth: 560,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
@@ -359,6 +362,7 @@ class _ResumeRoastScreenState extends State<ResumeRoastScreen> {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),

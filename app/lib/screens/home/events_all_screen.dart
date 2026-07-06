@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../utils/app_colors.dart';
+import '../../utils/app_spacing.dart';
+import '../../utils/breakpoints.dart';
+import '../../widgets/responsive_layout.dart';
 import '../../models/event_models.dart';
 
 class EventsAllScreen extends StatelessWidget {
@@ -54,11 +57,38 @@ class EventsAllScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                itemCount: events.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (_, i) => _eventCard(events[i]),
+              child: ResponsiveLayout(
+                mobile: (_) => ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  itemCount: events.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (_, i) => _eventCard(events[i]),
+                ),
+                desktop: (_) => SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: MaxWidthContent(
+                    maxWidth: 1000,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns =
+                            Breakpoints.isWide(constraints.maxWidth) ? 3 : 2;
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: events.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            mainAxisSpacing: AppSpacing.lg,
+                            crossAxisSpacing: AppSpacing.lg,
+                            childAspectRatio: 1.3,
+                          ),
+                          itemBuilder: (_, i) => _eventCard(events[i]),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

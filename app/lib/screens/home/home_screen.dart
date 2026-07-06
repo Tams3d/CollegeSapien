@@ -83,8 +83,13 @@ String _fmt(String t) {
 
 class HomeScreen extends StatefulWidget {
   final Function(int)? onTabSwitch;
+  final bool showProfileButton;
 
-  const HomeScreen({super.key, this.onTabSwitch});
+  const HomeScreen({
+    super.key,
+    this.onTabSwitch,
+    this.showProfileButton = true,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -778,25 +783,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              ),
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.accentBlue,
-                  border: Border.all(color: Colors.black),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(offset: Offset(1, 1), color: Colors.black)
-                  ],
+            if (widget.showProfileButton)
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
                 ),
-                child: const Icon(Icons.person, size: 22),
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentBlue,
+                    border: Border.all(color: Colors.black),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: const [
+                      BoxShadow(offset: Offset(1, 1), color: Colors.black)
+                    ],
+                  ),
+                  child: const Icon(Icons.person, size: 22),
+                ),
               ),
-            ),
           ],
         ),
         if (_collegeName.isNotEmpty) ...[

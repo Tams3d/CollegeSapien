@@ -11,6 +11,7 @@ import 'home_screen.dart';
 import '../attendance_screen.dart';
 import '../timetable_list_screen.dart';
 import '../resources/resources_hub_screen.dart';
+import '../profile/profile_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -25,7 +26,6 @@ class _MainNavigationState extends State<MainNavigation>
   int _attendanceRefreshToken = 0;
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fade;
-  late final Widget _homeScreen;
 
   static const _navItems = [
     (icon: Icons.home_outlined, label: 'Home'),
@@ -43,7 +43,6 @@ class _MainNavigationState extends State<MainNavigation>
     );
     _fade = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeInOut);
     _fadeCtrl.forward();
-    _homeScreen = HomeScreen(onTabSwitch: _onTab);
 
     _prepareAttendanceNotifications();
   }
@@ -87,7 +86,7 @@ class _MainNavigationState extends State<MainNavigation>
           begin: const Offset(0, 0.06),
           end: Offset.zero,
         ).animate(_fade),
-        child: _screenForIndex(_currentIndex),
+        child: _screenForIndex(_currentIndex, showRail: showRail),
       ),
     );
 
@@ -105,13 +104,17 @@ class _MainNavigationState extends State<MainNavigation>
     );
   }
 
-  Widget _screenForIndex(int index) {
+  Widget _screenForIndex(int index, {required bool showRail}) {
+    final homeScreen = HomeScreen(
+      onTabSwitch: _onTab,
+      showProfileButton: !showRail,
+    );
     return switch (index) {
-      0 => _homeScreen,
+      0 => homeScreen,
       1 => AttendanceScreen(refreshToken: _attendanceRefreshToken),
       2 => const TimetableListScreen(),
       3 => const ResourcesHubScreen(),
-      _ => _homeScreen,
+      _ => homeScreen,
     };
   }
 
@@ -229,9 +232,66 @@ class _MainNavigationState extends State<MainNavigation>
                 if (i > 0) const SizedBox(height: 12),
                 _railItem(i, expanded: expanded),
               ],
+              const Spacer(),
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                height: 1.5,
+                color: Colors.black.withValues(alpha: 0.15),
+              ),
+              _profileRailItem(expanded: expanded),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _profileRailItem({required bool expanded}) {
+    const icon = Icon(Icons.person_outline, size: 24, color: Colors.black);
+    const label = Text(
+      'Profile',
+      style: TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        letterSpacing: -0.21,
+        color: Color(0xFF191C1E),
+      ),
+    );
+    final rowContent = expanded
+        ? const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [icon, SizedBox(width: 12), label],
+          )
+        : const Center(child: icon);
+
+    Widget itemWidget = Hoverable(
+      builder: (context, hovered) => AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: hovered
+              ? Colors.black.withValues(alpha: 0.06)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: rowContent,
+      ),
+    );
+
+    if (!expanded) {
+      itemWidget = Tooltip(message: 'Profile', child: itemWidget);
+    }
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+        ),
+        child: itemWidget,
       ),
     );
   }

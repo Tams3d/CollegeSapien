@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/timetable_models.dart';
+import '../widgets/responsive_layout.dart';
 
 class TimetableDetailScreen extends StatefulWidget {
   final TimetableSubject subject;
@@ -32,13 +33,16 @@ class _TimetableDetailScreenState extends State<TimetableDetailScreen> {
               horizontal: screenWidth * 0.045,
               vertical: 20,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 30),
-                TimetableDetailView(subject: widget.subject),
-              ],
+            child: MaxWidthContent(
+              maxWidth: 800,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 30),
+                  TimetableDetailView(subject: widget.subject),
+                ],
+              ),
             ),
           ),
         ),
