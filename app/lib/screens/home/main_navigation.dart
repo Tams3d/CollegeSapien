@@ -27,6 +27,12 @@ class _MainNavigationState extends State<MainNavigation>
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fade;
 
+  // Re-created on every tab switch so the nested Navigator below resets its
+  // pushed stack (e.g. leaving Profile open) instead of carrying it across
+  // tabs, while still giving rail items outside its subtree (_profileRailItem)
+  // a stable handle to push onto it imperatively.
+  GlobalKey<NavigatorState> _contentNavKey = GlobalKey<NavigatorState>();
+
   static const _navItems = [
     (icon: Icons.home_outlined, label: 'Home'),
     (icon: Icons.check_circle_outline, label: 'Attendance'),
@@ -68,6 +74,7 @@ class _MainNavigationState extends State<MainNavigation>
     _fadeCtrl.value = 0.0;
     setState(() {
       _currentIndex = index;
+      _contentNavKey = GlobalKey<NavigatorState>();
       if (index == 1) _attendanceRefreshToken += 1;
     });
     _fadeCtrl.forward();
@@ -79,7 +86,7 @@ class _MainNavigationState extends State<MainNavigation>
     final showRail = Breakpoints.isAtLeastTablet(width);
     final railExpanded = Breakpoints.isAtLeastDesktop(width);
 
-    final content = FadeTransition(
+    final screen = FadeTransition(
       opacity: _fade,
       child: SlideTransition(
         position: Tween<Offset>(
@@ -89,6 +96,21 @@ class _MainNavigationState extends State<MainNavigation>
         child: _screenForIndex(_currentIndex, showRail: showRail),
       ),
     );
+
+    // On mobile, screens pushed from within a tab (Profile, subjects editor,
+    // etc.) are meant to take over the full screen — same as today. On
+    // tablet/desktop, the left rail is persistent chrome, so those pushes
+    // must land in this nested Navigator instead of the root one; otherwise
+    // Navigator.push (used throughout the app) would cover the rail too.
+    final content = showRail
+        ? Navigator(
+            key: _contentNavKey,
+            onGenerateRoute: (settings) => MaterialPageRoute(
+              builder: (_) => screen,
+              settings: settings,
+            ),
+          )
+        : screen;
 
     return Scaffold(
       body: showRail
@@ -287,10 +309,19 @@ class _MainNavigationState extends State<MainNavigation>
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ProfileScreen()),
-        ),
+        onTap: () {
+          // This item sits outside the content pane's own subtree (it's a
+          // rail item, a sibling of the nested Navigator in the Row), so
+          // Navigator.of(context) here would find the root Navigator, not
+          // the nested one — push onto it explicitly via its key instead.
+          final nav = _contentNavKey.currentState;
+          final route = MaterialPageRoute(builder: (_) => const ProfileScreen());
+          if (nav != null) {
+            nav.push(route);
+          } else {
+            Navigator.push(context, route);
+          }
+        },
         child: itemWidget,
       ),
     );
