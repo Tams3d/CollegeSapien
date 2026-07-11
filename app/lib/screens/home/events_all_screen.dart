@@ -73,7 +73,7 @@ class EventsAllScreen extends StatelessWidget {
                           Icon(Icons.add, size: 16, color: Colors.black),
                           SizedBox(width: 4),
                           Text(
-                            'SUGGEST',
+                            'ADD',
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
