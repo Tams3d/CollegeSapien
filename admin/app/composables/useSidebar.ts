@@ -1,3 +1,5 @@
+import { breakpointsTailwind, useBreakpoints } from "@vueuse/core";
+
 const isOpen = ref(false);
 
 export function useSidebar() {
