@@ -60,11 +60,7 @@ export const saveSubjects = async (req: AuthRequest, res: Response) => {
         isElective: s.isElective === true,
       };
       if (s.electiveType) cleaned.electiveType = s.electiveType;
-      if (s.courseType) cleaned.courseType = s.courseType;
-      if (s.ltp) cleaned.ltp = s.ltp;
-      if (typeof s.tcp === 'number') cleaned.tcp = s.tcp;
       if (s.category) cleaned.category = s.category;
-      if (s.electiveStream) cleaned.electiveStream = s.electiveStream;
       return cleaned;
     });
 

@@ -1,19 +1,12 @@
 <script setup lang="ts">
 interface CurriculumSubject {
-  semester: string;
-  parent_semester?: number | null;
+  semester: number | null;
   subject_code?: string;
   subject_name: string;
-  course_type?: string;
-  l_t_p?: string;
-  tcp?: number | null;
   credits?: number | null;
   category?: string;
-  is_elective?: boolean;
   elective_type?: string | null;
   record_type?: string;
-  elective_stream?: string | null;
-  options_from?: string | null;
 }
 
 const props = defineProps<{
@@ -28,24 +21,22 @@ const emit = defineEmits<{
 
 const form = reactive<CurriculumSubject>({ ...props.subject });
 
-const recordTypeOptions = ["core", "slot", "option"];
+const recordTypeOptions = ["core", "elective", "option"];
 
 const save = () => {
-  if (!form.subject_name.trim() || !form.semester.trim()) return;
+  if (!form.subject_name.trim()) return;
+  if (
+    form.record_type !== "option" &&
+    (form.semester === undefined ||
+      form.semester === null ||
+      (form.semester as unknown as string) === "")
+  ) {
+    return;
+  }
   emit("save", {
     ...form,
     subject_name: form.subject_name.trim(),
-    semester: form.semester.trim(),
-    parent_semester:
-      form.parent_semester === undefined ||
-      form.parent_semester === null ||
-      (form.parent_semester as unknown as string) === ""
-        ? null
-        : Number(form.parent_semester),
-    tcp:
-      form.tcp === undefined || form.tcp === null || (form.tcp as unknown as string) === ""
-        ? null
-        : Number(form.tcp),
+    semester: form.record_type === "option" ? null : Number(form.semester),
     credits:
       form.credits === undefined ||
       form.credits === null ||
@@ -57,17 +48,14 @@ const save = () => {
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
-    @click.self="emit('cancel')"
-  >
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6">
+  <Modal max-width="max-w-lg" z-index="z-[60]" @close="emit('cancel')">
+    <div class="p-6">
       <h3 class="text-base font-semibold text-gray-900 mb-4">
         {{ isNew ? "Add subject" : "Edit subject" }}
       </h3>
 
-      <div class="grid grid-cols-2 gap-3">
-        <div class="col-span-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="sm:col-span-2">
           <label class="block text-xs font-medium text-gray-600 mb-1"
             >Subject name *</label
           >
@@ -101,61 +89,19 @@ const save = () => {
           </select>
         </div>
 
-        <div>
+        <div v-if="form.record_type !== 'option'">
           <label class="block text-xs font-medium text-gray-600 mb-1"
-            >Semester / pool *</label
+            >Semester *</label
           >
           <input
-            v-model="form.semester"
-            placeholder="e.g. 3 or Programme Elective"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1"
-            >Parent semester</label
-          >
-          <input
-            v-model="form.parent_semester"
+            v-model.number="form.semester"
             type="number"
-            placeholder="Numeric semester (for slots)"
+            placeholder="e.g. 5"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
           />
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1"
-            >Course type</label
-          >
-          <input
-            v-model="form.course_type"
-            placeholder="T / LIT / L"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-        </div>
 
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1"
-            >L-T-P</label
-          >
-          <input
-            v-model="form.l_t_p"
-            placeholder="3-0-0"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1"
-            >TCP</label
-          >
-          <input
-            v-model="form.tcp"
-            type="number"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-        </div>
 
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1"
@@ -189,34 +135,6 @@ const save = () => {
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
           />
         </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1"
-            >Elective stream</label
-          >
-          <input
-            v-model="form.elective_stream"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1"
-            >Options from</label
-          >
-          <input
-            v-model="form.options_from"
-            placeholder="Pool this slot picks from"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-        </div>
-
-        <div class="col-span-2">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input v-model="form.is_elective" type="checkbox" class="w-4 h-4" />
-            <span class="text-sm text-gray-700">Is elective</span>
-          </label>
-        </div>
       </div>
 
       <div class="flex justify-end gap-2 pt-5">
@@ -234,5 +152,5 @@ const save = () => {
         </button>
       </div>
     </div>
-  </div>
+  </Modal>
 </template>

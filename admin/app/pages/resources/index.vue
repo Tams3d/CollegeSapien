@@ -19,6 +19,8 @@ interface Resource {
 }
 
 const { get, patch, delete: apiDelete } = useApi();
+const authStore = useAuthStore();
+const isAmbassador = computed(() => authStore.user?.role === "ambassador");
 
 const stats = ref<Stats | null>(null);
 const statsLoading = ref(true);
@@ -49,6 +51,10 @@ const fetchResources = async () => {
 };
 
 const archive = async (id: string) => {
+  if (isAmbassador.value) {
+    alert("Ambassadors do not have permission to archive resources.");
+    return;
+  }
   actionInFlight.value.add(id);
   try {
     await apiDelete(`/admin/resources/${id}`);
@@ -101,7 +107,7 @@ watch([tab, categoryFilter], fetchResources);
       {{ statsError }}
     </div>
     <template v-else-if="stats">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard
           label="Approved Notes"
           :value="stats.approvedNotes"
@@ -152,7 +158,7 @@ watch([tab, categoryFilter], fetchResources);
         </button>
       </div>
 
-      <div class="flex flex-row gap-4">
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
         <div
           class="flex rounded-lg bg-gray-100 p-1 gap-1 overflow-hidden text-sm"
         >
@@ -247,7 +253,7 @@ watch([tab, categoryFilter], fetchResources);
             Open File
           </a>
           <button
-            v-if="tab === 'approved'"
+            v-if="tab === 'approved' && !isAmbassador"
             :disabled="actionInFlight.has(resource.id)"
             class="px-3 py-1.5 text-xs font-medium border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-60 transition-colors"
             @click="archive(resource.id)"

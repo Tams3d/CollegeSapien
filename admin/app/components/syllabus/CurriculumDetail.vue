@@ -1,19 +1,12 @@
 <script setup lang="ts">
 interface CurriculumSubject {
-  semester: string;
-  parent_semester?: number | null;
+  semester: number | null;
   subject_code?: string;
   subject_name: string;
-  course_type?: string;
-  l_t_p?: string;
-  tcp?: number | null;
   credits?: number | null;
   category?: string;
-  is_elective?: boolean;
   elective_type?: string | null;
   record_type?: string;
-  elective_stream?: string | null;
-  options_from?: string | null;
 }
 
 interface Curriculum {
@@ -38,6 +31,7 @@ const emit = defineEmits<{
   close: [];
   approve: [id: string];
   reject: [id: string];
+  delete: [id: string];
   save: [
     payload: {
       id: string;
@@ -53,6 +47,8 @@ const emit = defineEmits<{
 }>();
 
 const editMode = ref(false);
+const authStore = useAuthStore();
+const isAmbassador = computed(() => authStore.user?.role === "ambassador");
 const editHeader = reactive({
   college: "",
   collegeCode: "",
@@ -98,9 +94,7 @@ watch(
 );
 
 const effectiveSemester = (s: CurriculumSubject): number | null => {
-  if (typeof s.parent_semester === "number") return s.parent_semester;
-  const n = parseInt(s.semester, 10);
-  return Number.isNaN(n) ? null : n;
+  return s.semester;
 };
 
 const displaySubjects = computed(() =>
@@ -134,20 +128,13 @@ const openAddSubject = (defaults: Partial<CurriculumSubject>) => {
   subjectModal.value = {
     index: null,
     subject: {
-      semester: "",
+      semester: null,
       subject_name: "",
       subject_code: "",
-      course_type: "",
-      l_t_p: "",
-      tcp: null,
       credits: null,
       category: "",
-      is_elective: false,
       elective_type: null,
       record_type: "core",
-      elective_stream: null,
-      options_from: null,
-      parent_semester: null,
       ...defaults,
     },
   };
@@ -170,16 +157,14 @@ const handleSubjectSave = (subject: CurriculumSubject) => {
 const deleteSubject = (index: number) => {
   editSubjects.value.splice(index, 1);
 };
+
+const handleDelete = () => {
+  emit("delete", props.curriculum.id);
+};
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-    @click.self="emit('close')"
-  >
-    <div
-      class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[85vh] overflow-y-auto"
-    >
+  <Modal max-width="max-w-3xl" @close="emit('close')">
       <div
         class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-start justify-between gap-4"
       >
@@ -193,7 +178,7 @@ const deleteSubject = (index: number) => {
             {{ curriculum.subjects.length }} subjects
           </p>
         </div>
-        <div v-else class="grid grid-cols-2 gap-2 flex-1">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
           <input
             v-model="editHeader.college"
             placeholder="College name"
@@ -229,6 +214,15 @@ const deleteSubject = (index: number) => {
             Edit
           </button>
           <button
+            v-if="!editMode && curriculum.status === 'approved' && !isAmbassador"
+            class="px-3 py-1.5 text-xs font-medium border border-red-300 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1"
+            title="Delete Curriculum"
+            @click="handleDelete"
+          >
+            <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
+            Delete
+          </button>
+          <button
             class="p-1 text-gray-400 hover:text-gray-700"
             @click="editMode ? cancelEdit() : emit('close')"
           >
@@ -251,8 +245,7 @@ const deleteSubject = (index: number) => {
               class="text-xs text-yellow-700 hover:text-yellow-800 font-medium"
               @click="
                 openAddSubject({
-                  semester: String(semester),
-                  parent_semester: null,
+                  semester: semester,
                   record_type: 'core',
                 })
               "
@@ -260,64 +253,62 @@ const deleteSubject = (index: number) => {
               + Add subject
             </button>
           </div>
-          <table class="w-full text-xs">
-            <thead>
-              <tr class="text-left text-gray-400 border-b border-gray-100">
-                <th class="py-1.5 pr-2 font-medium">Code</th>
-                <th class="py-1.5 pr-2 font-medium">Name</th>
-                <th class="py-1.5 pr-2 font-medium">L-T-P</th>
-                <th class="py-1.5 pr-2 font-medium">Credits</th>
-                <th class="py-1.5 pr-2 font-medium">Category</th>
-                <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in rows"
-                :key="`${semester}-${row.index}`"
-                class="border-b border-gray-50"
-              >
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.subject_code || "—" }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-900">
-                  {{ row.subject.subject_name }}
-                  <span
-                    v-if="row.subject.record_type === 'slot'"
-                    class="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full"
-                    >Elective slot</span
-                  >
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.l_t_p || "—" }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.credits ?? "—" }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.category || "—" }}
-                </td>
-                <td v-if="editMode" class="py-1.5 pr-2">
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="text-gray-400 hover:text-gray-700"
-                      title="Edit"
-                      @click="openEditSubject(row.index)"
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-left text-gray-400 border-b border-gray-100">
+                  <th class="py-1.5 pr-2 font-medium">Code</th>
+                  <th class="py-1.5 pr-2 font-medium">Name</th>
+                  <th class="py-1.5 pr-2 font-medium">Credits</th>
+                  <th class="py-1.5 pr-2 font-medium">Category</th>
+                  <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in rows"
+                  :key="`${semester}-${row.index}`"
+                  class="border-b border-gray-50"
+                >
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.subject_code || "—" }}
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-900">
+                    {{ row.subject.subject_name }}
+                    <span
+                      v-if="row.subject.record_type === 'elective'"
+                      class="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full"
+                      >Elective</span
                     >
-                      <Icon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      class="text-gray-400 hover:text-red-500"
-                      title="Delete"
-                      @click="deleteSubject(row.index)"
-                    >
-                      <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.credits ?? "—" }}
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.category || "—" }}
+                  </td>
+                  <td v-if="editMode" class="py-1.5 pr-2">
+                    <div class="flex items-center gap-2">
+                      <button
+                        class="text-gray-400 hover:text-gray-700"
+                        title="Edit"
+                        @click="openEditSubject(row.index)"
+                      >
+                        <Icon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        class="text-gray-400 hover:text-red-500"
+                        title="Delete"
+                        @click="deleteSubject(row.index)"
+                      >
+                        <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div v-for="[pool, rows] in optionGroups" :key="`pool-${pool}`">
@@ -330,61 +321,62 @@ const deleteSubject = (index: number) => {
               class="text-xs text-yellow-700 hover:text-yellow-800 font-medium"
               @click="
                 openAddSubject({
-                  semester: pool,
+                  semester: null,
                   record_type: 'option',
                   elective_type: pool,
-                  is_elective: true,
                 })
               "
             >
               + Add option
             </button>
           </div>
-          <table class="w-full text-xs">
-            <thead>
-              <tr class="text-left text-gray-400 border-b border-gray-100">
-                <th class="py-1.5 pr-2 font-medium">Name</th>
-                <th class="py-1.5 pr-2 font-medium">Stream</th>
-                <th class="py-1.5 pr-2 font-medium">Credits</th>
-                <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in rows"
-                :key="`${pool}-${row.index}`"
-                class="border-b border-gray-50"
-              >
-                <td class="py-1.5 pr-2 text-gray-900">
-                  {{ row.subject.subject_name }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.elective_stream || "—" }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.credits ?? "—" }}
-                </td>
-                <td v-if="editMode" class="py-1.5 pr-2">
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="text-gray-400 hover:text-gray-700"
-                      title="Edit"
-                      @click="openEditSubject(row.index)"
-                    >
-                      <Icon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      class="text-gray-400 hover:text-red-500"
-                      title="Delete"
-                      @click="deleteSubject(row.index)"
-                    >
-                      <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-left text-gray-400 border-b border-gray-100">
+                  <th class="py-1.5 pr-2 font-medium">Name</th>
+                  <th class="py-1.5 pr-2 font-medium">Category</th>
+                  <th class="py-1.5 pr-2 font-medium">Credits</th>
+                  <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in rows"
+                  :key="`${pool}-${row.index}`"
+                  class="border-b border-gray-50"
+                >
+                  <td class="py-1.5 pr-2 text-gray-900">
+                    {{ row.subject.subject_name }}
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.category || "—" }}
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.credits ?? "—" }}
+                  </td>
+                  <td v-if="editMode" class="py-1.5 pr-2">
+                    <div class="flex items-center gap-2">
+                      <button
+                        class="text-gray-400 hover:text-gray-700"
+                        title="Edit"
+                        @click="openEditSubject(row.index)"
+                      >
+                        <Icon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        class="text-gray-400 hover:text-red-500"
+                        title="Delete"
+                        @click="deleteSubject(row.index)"
+                      >
+                        <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <button
@@ -423,6 +415,7 @@ const deleteSubject = (index: number) => {
             Reject
           </button>
           <button
+            v-if="!isAmbassador"
             :disabled="actionInFlight"
             class="px-4 py-2 text-sm bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:opacity-60 transition-colors"
             @click="emit('approve', curriculum.id)"
@@ -431,14 +424,13 @@ const deleteSubject = (index: number) => {
           </button>
         </template>
       </div>
-    </div>
+  </Modal>
 
-    <SyllabusSubjectFormModal
-      v-if="subjectModal"
-      :subject="subjectModal.subject"
-      :is-new="subjectModal.index === null"
-      @save="handleSubjectSave"
-      @cancel="subjectModal = null"
-    />
-  </div>
+  <SyllabusSubjectFormModal
+    v-if="subjectModal"
+    :subject="subjectModal.subject"
+    :is-new="subjectModal.index === null"
+    @save="handleSubjectSave"
+    @cancel="subjectModal = null"
+  />
 </template>

@@ -17,7 +17,7 @@ export const useAuthStore = defineStore("auth", {
     isAdminOrAbove: (state) =>
       state.user?.role === "admin" || state.user?.role === "superadmin",
     canModerate: (state) =>
-      ["moderator", "admin", "superadmin"].includes(state.user?.role ?? ""),
+      ["moderator", "admin", "superadmin", "ambassador"].includes(state.user?.role ?? ""),
   },
 
   actions: {

@@ -14,13 +14,10 @@ import '../../models/event_models.dart';
 import '../../services/api_service.dart';
 import '../../services/attendance_service.dart';
 import '../../services/auth_service.dart';
-import '../../services/cache_service.dart';
 import '../../services/college_service.dart';
-import '../../services/timetable_service.dart';
 import '../profile/profile_screen.dart';
 import '../../models/syllabus_models.dart';
 import '../../services/syllabus_service.dart';
-import '../../utils/department_constants.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 import '../attendance/mark_attendance_screen.dart';
@@ -105,7 +102,13 @@ class _HomeScreenState extends State<HomeScreen> {
   final Set<String> _markedSlots = {};
   List<SavedSubject> _savedSubjects = [];
   bool _showingCurriculumFallback = false;
+  // True once we know whether the user has subjects (from cache or network)
+  // — gates the "configure your subjects" empty state so it doesn't flash
+  // while the first load is still in flight.
+  bool _subjectsResolved = false;
   String _userName = '';
+  String _collegeName = '';
+  String _department = '';
 
   static String get _todayMarkedKey =>
       'marked_slots_${_dateKey(DateTime.now())}';
@@ -150,9 +153,48 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Paint whatever's cached first, then trigger the network refresh.
       _initializeStateFromProvider();
+      final appState = Provider.of<AppStateNotifier>(context, listen: false);
+      appState.addListener(_onAppStateChanged);
+      _load();
     });
-    _load();
+  }
+
+  @override
+  void dispose() {
+    try {
+      final appState = Provider.of<AppStateNotifier>(context, listen: false);
+      appState.removeListener(_onAppStateChanged);
+    } catch (_) {}
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (!mounted) return;
+    final appState = Provider.of<AppStateNotifier>(context, listen: false);
+    final user = appState.userProfile;
+    if (user != null) {
+      if (user.semester != _semester ||
+          user.name != _userName ||
+          (user.collegeName ?? '') != _collegeName ||
+          (user.department ?? '') != _department) {
+        setState(() {
+          _semester = user.semester;
+          _userName = user.name;
+          _collegeName = user.collegeName ?? '';
+          _department = user.department ?? '';
+          // Old subjects/attendance may no longer apply — clear until the
+          // reload below resolves them for the new profile.
+          _savedSubjects = appState.savedSubjects ?? [];
+          _showingCurriculumFallback = appState.savedSubjectsFromCurriculum;
+          _subjectsResolved = false;
+        });
+        _load(); // Reload all data for the new semester/college/department
+        return;
+      }
+    }
+    _initializeStateFromProvider();
   }
 
   void _initializeStateFromProvider() {
@@ -161,14 +203,14 @@ class _HomeScreenState extends State<HomeScreen> {
       final appState = Provider.of<AppStateNotifier>(context, listen: false);
 
       // Load data from provider if available
-      if (appState.attendanceSummary != null && _summaries.isEmpty) {
+      if (appState.attendanceSummary != null) {
         setState(() => _summaries = appState.attendanceSummary!);
       }
-      if (appState.timetableSubjects != null && _todayClasses.isEmpty) {
+      if (appState.timetableSubjects != null) {
         _processTodayClasses(appState.timetableSubjects!);
-        setState(() {});
+        setState(() => _loadingTimetable = false);
       }
-      if (appState.events != null && _allEvents.isEmpty) {
+      if (appState.events != null) {
         setState(() {
           _allEvents = appState.events!;
           _shownEvents = _allEvents.take(2).toList();
@@ -180,117 +222,173 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _semester = appState.userProfile!.semester;
           _userName = appState.userProfile!.name;
+          _collegeName = appState.userProfile!.collegeName ?? '';
+          _department = appState.userProfile!.department ?? '';
         });
       }
-      if (appState.savedSubjects != null && _savedSubjects.isEmpty) {
+      if (appState.savedSubjects != null) {
         setState(() {
           _savedSubjects = appState.savedSubjects!;
-          _showingCurriculumFallback = false;
+          _showingCurriculumFallback = appState.savedSubjectsFromCurriculum;
+          _subjectsResolved = true;
         });
       }
     } catch (_) {}
   }
 
   Future<void> _load() async {
-    final profileFuture = _loadProfile();
-    await Future.wait([
-      _loadAttendance(),
-      _loadTimetable(),
-      _loadEvents(),
-      profileFuture,
-      _loadMarkedSlots(),
-    ]);
+    // Fire all load methods concurrently in the background
+    _loadProfile();
+    _loadEvents();
+    _loadMarkedSlots();
   }
 
   Future<void> _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cached = prefs.getInt('last_semester') ?? 0;
-    if (mounted && cached > 0) setState(() => _semester = cached);
-    try {
-      final result = await AuthService.instance.syncProfile();
-      final user = result.user;
-      if (user == null || !mounted) return;
-      await prefs.setInt('last_semester', user.semester);
-      await prefs.setString('last_college_name', user.collegeName ?? '');
+    final appState = Provider.of<AppStateNotifier>(context, listen: false);
+    var user = appState.userProfile ?? AuthService.instance.profile;
+
+    if (user != null) {
       if (mounted) {
-        final appState = Provider.of<AppStateNotifier>(context, listen: false);
-        appState.setUserProfile(user);
         setState(() {
           _semester = user.semester;
           _userName = user.name;
+          _collegeName = user.collegeName ?? '';
+          _department = user.department ?? '';
+        });
+        if (appState.savedSubjects != null) {
+          setState(() {
+            _savedSubjects = appState.savedSubjects!;
+            _showingCurriculumFallback = appState.savedSubjectsFromCurriculum;
+            _subjectsResolved = true;
+          });
+        }
+      }
+    }
+
+    // Cache is still fresh (e.g. splash screen just synced) — skip hitting
+    // the network again so opening the home screen doesn't always re-sync.
+    // Subjects must have been resolved too, or we'd never run the curriculum
+    // fallback below.
+    if (appState.hasFreshHomeData && appState.savedSubjects != null) return;
+
+    try {
+      // One sync call now returns profile + attendance + timetable + saved
+      // subjects together, instead of four separate network round trips.
+      final result = await AuthService.instance.syncProfile();
+      final freshUser = result.user;
+      if (freshUser == null) return;
+
+      // Update local state before touching appState: setUserProfile()
+      // notifies _onAppStateChanged synchronously, which compares against
+      // _semester/_userName — updating those first avoids it seeing a false
+      // "semester changed" mismatch and re-triggering _load().
+      if (mounted) {
+        setState(() {
+          _semester = freshUser.semester;
+          _userName = freshUser.name;
+          _collegeName = freshUser.collegeName ?? '';
+          _department = freshUser.department ?? '';
         });
       }
+      appState.setUserProfile(freshUser);
 
-      final syllabusService = SyllabusService();
-      List<SavedSubject>? saved;
-      try {
-        saved = await syllabusService.getSavedSubjects(user.semester);
-      } catch (_) {}
-      if (mounted && saved != null) {
-        final savedSubjects = saved;
-        final appState = Provider.of<AppStateNotifier>(context, listen: false);
-        appState.setSavedSubjects(savedSubjects);
-        setState(() {
-          _savedSubjects = savedSubjects;
-          _showingCurriculumFallback = false;
-        });
+      if (result.attendanceSummary != null) {
+        appState.setAttendanceSummary(result.attendanceSummary!);
+        if (mounted) setState(() => _summaries = result.attendanceSummary!);
+      }
+
+      if (result.timetableSubjects != null) {
+        appState.setTimetableSubjects(result.timetableSubjects!);
+        if (mounted) {
+          setState(() {
+            _processTodayClasses(result.timetableSubjects!);
+            _loadingTimetable = false;
+          });
+        }
       } else if (mounted) {
+        setState(() => _loadingTimetable = false);
+      }
+
+      final saved = result.savedSubjects?.subjects;
+      if (saved != null && saved.isNotEmpty) {
+        appState.setSavedSubjects(saved);
+        if (mounted) {
+          setState(() {
+            _savedSubjects = saved;
+            _showingCurriculumFallback = false;
+            _subjectsResolved = true;
+          });
+        }
+      } else {
+        final syllabusService = SyllabusService();
         // No saved subjects — try curriculum fallback
+        var fallbackApplied = false;
         try {
-          final colleges = await CollegeService().listColleges();
+          final collegeService = CollegeService();
+          final colleges = await collegeService.listColleges();
+          final departmentsList = await collegeService.listDepartments();
           final college =
-              colleges.where((c) => c.id == user.collegeId).firstOrNull;
+              colleges.where((c) => c.id == freshUser.collegeId).firstOrNull;
           final collegeCode = college?.code;
-          final deptObj =
-              departments.where((d) => d.name == user.department).firstOrNull;
+          final deptObj = departmentsList
+              .where((d) => d.name == freshUser.department)
+              .firstOrNull;
           final courseCode = deptObj?.code;
           if (collegeCode != null && courseCode != null) {
-            CurriculumBundle? bundle;
-            try {
-              bundle = await syllabusService.getCurriculum(
-                collegeCode: collegeCode,
-                courseCode: courseCode,
-              );
-            } catch (_) {}
-            if (bundle != null) {
-              final subjects = syllabusService.getSubjectsForSemester(
-                bundle,
-                semester: user.semester,
-              );
-              if (subjects.isNotEmpty && mounted) {
-                final savedSubjects = subjects
-                    .map((s) => SavedSubject(
-                          subjectCode: s.subjectCode,
-                          subjectName: s.subjectName,
-                          credits: s.credits,
-                          isElective: s.isElective,
-                          electiveType: s.electiveType,
-                          courseType: s.courseType,
-                          ltp: s.ltp,
-                          tcp: s.tcp,
-                          category: s.category,
-                        ))
-                    .toList();
-                final appState = Provider.of<AppStateNotifier>(context, listen: false);
-                appState.setSavedSubjects(savedSubjects);
+            final bundle = await syllabusService.getCurriculum(
+              collegeCode: collegeCode,
+              courseCode: courseCode,
+            );
+            final subjects = syllabusService.getSubjectsForSemester(
+              bundle,
+              semester: freshUser.semester,
+            );
+            if (subjects.isNotEmpty) {
+              final fallbackSubjects = subjects
+                  .map((s) => SavedSubject(
+                        subjectCode: s.subjectCode,
+                        subjectName: s.subjectName,
+                        credits: s.credits,
+                        isElective: s.isElective,
+                        electiveType: s.electiveType,
+                        category: s.category,
+                      ))
+                  .toList();
+              appState.setSavedSubjects(fallbackSubjects, fromCurriculum: true);
+              fallbackApplied = true;
+              if (mounted) {
                 setState(() {
-                  _savedSubjects = savedSubjects;
+                  _savedSubjects = fallbackSubjects;
                   _showingCurriculumFallback = true;
+                  _subjectsResolved = true;
                 });
               }
             }
           }
         } catch (_) {}
+        if (!fallbackApplied && mounted) {
+          // Nothing saved and no usable curriculum — show the configure
+          // prompt instead of stale subjects from a previous profile.
+          setState(() {
+            _savedSubjects = [];
+            _showingCurriculumFallback = false;
+            _subjectsResolved = true;
+          });
+        }
       }
     } catch (_) {}
   }
 
   Future<void> _loadAttendance() async {
+    final appState = Provider.of<AppStateNotifier>(context, listen: false);
+    if (appState.attendanceSummary != null && _summaries.isEmpty) {
+      if (mounted) setState(() => _summaries = appState.attendanceSummary!);
+    }
+
     try {
       final s = await AttendanceService().getSummary();
+      appState.setAttendanceSummary(s);
       if (mounted) {
-        final appState = Provider.of<AppStateNotifier>(context, listen: false);
-        appState.setAttendanceSummary(s);
         setState(() => _summaries = s);
       }
     } catch (_) {}
@@ -317,25 +415,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     entries.sort((a, b) => _toMin(a.startTime).compareTo(_toMin(b.startTime)));
     _todayClasses = entries;
-  }
-
-  Future<void> _loadTimetable() async {
-    try {
-      final appState = Provider.of<AppStateNotifier>(context, listen: false);
-
-      List<TimetableSubject>? subjects = appState.timetableSubjects;
-      subjects ??= await TimetableService().getAllSubjects();
-
-      if (mounted && subjects != null) {
-        appState.setTimetableSubjects(subjects);
-        setState(() {
-          _processTodayClasses(subjects!);
-          _loadingTimetable = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _loadingTimetable = false);
-    }
   }
 
   Future<void> _markSlotPresent(_ClassEntry entry) async {
@@ -382,27 +461,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadEvents() async {
-    try {
-      final appState = Provider.of<AppStateNotifier>(context, listen: false);
-
-      // Check if we have cached events that are still valid
-      if (appState.events != null) {
-        if (mounted) {
-          setState(() {
-            _allEvents = appState.events!;
-            _shownEvents = _allEvents.take(2).toList();
-            _hasMoreEvents = _allEvents.length > 2;
-            _loadingEvents = false;
-          });
-        }
-        return;
+    final appState = Provider.of<AppStateNotifier>(context, listen: false);
+    if (appState.events != null && _allEvents.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _allEvents = appState.events!;
+          _shownEvents = _allEvents.take(2).toList();
+          _hasMoreEvents = _allEvents.length > 2;
+          _loadingEvents = false;
+        });
       }
+      return;
+    }
 
-      final raw = await ApiService.instance.get('/events') as List<dynamic>;
-      final all = raw
-          .map((e) => EventItem.fromJson(e as Map<String, dynamic>))
-          .where((e) => e.eventName.isNotEmpty)
-          .toList();
+    try {
+      final res = await http
+          .get(Uri.parse(
+            'https://raw.githubusercontent.com/FOSSUChennai/Communities/'
+            'c809df4bc58b5b6265a99a91124acd2352a418f8/src/data/events.json',
+          ))
+          .timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final raw = jsonDecode(res.body) as List<dynamic>;
+        final all = raw
+            .map((e) => EventItem.fromJson(e as Map<String, dynamic>))
+            .where((e) => e.eventName.isNotEmpty)
+            .toList();
 
         // Sort: upcoming first (date >= today), then past most-recent first
         final today = DateTime.now();
@@ -425,8 +509,8 @@ class _HomeScreenState extends State<HomeScreen> {
             return db.compareTo(da);
           });
 
+        appState.setEvents(shown);
         if (mounted) {
-          appState.setEvents(shown);
           setState(() {
             _allEvents = shown;
             _shownEvents = shown.take(2).toList();
@@ -481,9 +565,17 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _header(),
               const SizedBox(height: 24),
-              _attendanceCard(),
-              const SizedBox(height: 16),
-              _isDayOver ? _dayOverStack() : _nextClassCard(),
+              Row(
+                children: [
+                  Expanded(
+                    child: _attendanceCard(),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _isDayOver ? _dayOverCard() : _nextClassCard(),
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
               _sectionHeader("Today's Timetable", onShowAll: () {
                 Navigator.push(
@@ -496,9 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
               if (_savedSubjects.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 _sectionHeader(
-                  _showingCurriculumFallback
-                      ? "Semester Subjects"
-                      : "Your Subjects",
+                  "${_semester == 1 ? '1st' : _semester == 2 ? '2nd' : _semester == 3 ? '3rd' : '${_semester}th'} Semester Subjects",
                   onShowAll: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -544,6 +634,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 _syllabusCarousel(),
+              ] else if (_subjectsResolved && _semester > 0) ...[
+                const SizedBox(height: 24),
+                _sectionHeader(
+                  "${_semester == 1 ? '1st' : _semester == 2 ? '2nd' : _semester == 3 ? '3rd' : '${_semester}th'} Semester Subjects",
+                ),
+                const SizedBox(height: 12),
+                _configureSubjectsCard(),
               ],
               const SizedBox(height: 24),
               _sectionHeader(
@@ -610,39 +707,16 @@ class _HomeScreenState extends State<HomeScreen> {
   // ─── Header ────────────────────────────────────────────────────────────────
 
   Widget _header() {
-    final now = DateTime.now();
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    String daySuffix(int day) {
-      if (day >= 11 && day <= 13) return 'th';
-      switch (day % 10) {
-        case 1: return 'st';
-        case 2: return 'nd';
-        case 3: return 'rd';
-        default: return 'th';
-      }
-    }
-    final dateStr = '${weekdays[now.weekday - 1]}, ${now.day}${daySuffix(now.day)} ${months[now.month - 1]}';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          dateStr.toUpperCase(),
-          style: TextStyle(
-            fontFamily: 'Public Sans',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-            color: Colors.black.withValues(alpha: 0.5),
-          ),
-        ),
-        const SizedBox(height: 4),
         Row(
           children: [
             Expanded(
               child: Text(
-                _userName.isEmpty ? 'Hi there' : 'Hi ${_userName.split(' ').first}',
+                _userName.isEmpty
+                    ? 'Hi there'
+                    : 'Hi ${_userName.split(' ').first}',
                 style: const TextStyle(
                   fontFamily: 'Lexend Mega',
                   fontSize: 20,
@@ -665,7 +739,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   border: Border.all(color: Colors.black),
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: const [
-                    BoxShadow(offset: Offset(2, 2), color: Colors.black)
+                    BoxShadow(offset: Offset(1, 1), color: Colors.black)
                   ],
                 ),
                 child: const Icon(Icons.person, size: 22),
@@ -673,6 +747,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+        if (_collegeName.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            _collegeName.toUpperCase(),
+            style: TextStyle(
+              fontFamily: 'Public Sans',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: Colors.black.withValues(alpha: 0.5),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ],
     );
   }
@@ -682,86 +771,99 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _attendanceCard() {
     final hasData = _summaries.isNotEmpty;
     final pctStr = hasData ? _avgPct.toStringAsFixed(0) : '--';
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.primaryYellow,
-          border: Border.all(color: Colors.black, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: const [
-            BoxShadow(offset: Offset(4, 4), color: Colors.black)
-          ],
-        ),
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: AppColors.primaryYellow,
+        border: Border.all(color: Colors.black, width: 1.5),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [BoxShadow(offset: Offset(1, 1), color: Colors.black)],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6.5),
         child: Stack(
-          clipBehavior: Clip.none,
           children: [
             _shineStripes(const Color(0xFFFCD150)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'CURRENT ATTENDANCE',
-                  style: TextStyle(
-                    fontFamily: 'Public Sans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.1,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                RichText(
-                  text: TextSpan(
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextSpan(
-                        text: pctStr,
+                      const Text(
+                        'CURRENT ATTENDANCE',
                         style: TextStyle(
-                          fontFamily: 'Lexend Mega',
-                          fontSize: 100,
-                          fontWeight: FontWeight.w700,
-                          // Only use tight tracking for real numbers, not placeholder
-                          letterSpacing: hasData ? -4.0 : 0,
+                          fontFamily: 'Public Sans',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.1,
                           color: Colors.black,
-                          height: 0.9,
                         ),
                       ),
-                      if (hasData)
-                        const TextSpan(
-                          text: '%',
-                          style: TextStyle(
-                            fontFamily: 'Lexend Mega',
-                            fontSize: 63,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -2.0,
-                            color: Colors.black,
-                            height: 0.9,
-                          ),
+                      const SizedBox(height: 8),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: pctStr,
+                              style: TextStyle(
+                                fontFamily: 'Lexend Mega',
+                                fontSize: 54,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: hasData ? -2.0 : 0,
+                                color: Colors.black,
+                                height: 1.0,
+                              ),
+                            ),
+                            if (hasData)
+                              const TextSpan(
+                                text: '%',
+                                style: TextStyle(
+                                  fontFamily: 'Lexend Mega',
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -1.0,
+                                  color: Colors.black,
+                                  height: 1.0,
+                                ),
+                              ),
+                          ],
                         ),
+                      ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time_rounded, size: 12),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Safe To Skip : $_totalSkip Classes',
-                      style: const TextStyle(
-                        fontFamily: 'Public Sans',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time_rounded, size: 12),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Safe To Skip : $_totalSkip Classes',
+                              style: const TextStyle(
+                                fontFamily: 'Public Sans',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                _progressBar(hasData ? _avgPct / 100 : 0, pctStr, hasData),
-              ],
+                      const SizedBox(height: 10),
+                      _progressBar(
+                          hasData ? _avgPct / 100 : 0, pctStr, hasData),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -826,80 +928,98 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _nextClassCard() {
     final next = _nextClass;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.primaryYellow,
-          border: Border.all(color: Colors.black, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: const [
-            BoxShadow(offset: Offset(4, 4), color: Colors.black)
-          ],
-        ),
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: AppColors.primaryYellow,
+        border: Border.all(color: Colors.black, width: 1.5),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [BoxShadow(offset: Offset(1, 1), color: Colors.black)],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6.5),
         child: Stack(
-          clipBehavior: Clip.none,
           children: [
             _shineStripes(const Color(0xFFFCD150)),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'NEXT CLASS',
-                  style: TextStyle(
-                    fontFamily: 'Public Sans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.1,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  next?.subjectName ??
-                      (_todayClasses.isEmpty
-                          ? 'No classes set up'
-                          : 'No more classes today'),
-                  style: const TextStyle(
-                    fontFamily: 'Lexend Mega',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5, // fixed: was -3.6 which merged words
-                    color: Colors.black,
-                  ),
-                ),
-                if (next != null && next.room.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    next.room,
-                    style: TextStyle(
-                      fontFamily: 'Public Sans',
-                      fontSize: 14,
-                      color: Colors.black.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-                if (next != null) ...[
-                  const SizedBox(height: 16),
-                  Row(
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.access_time_rounded, size: 12),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${_fmt(next.startTime)} - ${_fmt(next.endTime)}',
-                        style: const TextStyle(
+                      const Text(
+                        'NEXT CLASS',
+                        style: TextStyle(
                           fontFamily: 'Public Sans',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.1,
                           color: Colors.black,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Text(
+                        next?.subjectName ??
+                            (_todayClasses.isEmpty
+                                ? 'No classes set up'
+                                : 'No more classes today'),
+                        style: const TextStyle(
+                          fontFamily: 'Lexend Mega',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.5,
+                          color: Colors.black,
+                          height: 1.2,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (next != null && next.room.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          next.room,
+                          style: TextStyle(
+                            fontFamily: 'Public Sans',
+                            fontSize: 12,
+                            color: Colors.black.withValues(alpha: 0.7),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
                   ),
+                  if (next != null) ...[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.access_time_rounded, size: 12),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                '${_fmt(next.startTime)} - ${_fmt(next.endTime)}',
+                                style: const TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ],
         ),
@@ -907,118 +1027,88 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ─── Day over stack ────────────────────────────────────────────────────────
-
-  Widget _dayOverStack() {
-    return SizedBox(
-      height: 160,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(
-            top: 12,
-            left: 10,
-            right: -10,
-            child: _stackBackCard(),
-          ),
-          Positioned(
-            top: 6,
-            left: 5,
-            right: -5,
-            child: _stackBackCard(),
-          ),
-          GestureDetector(
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const MarkAttendanceScreen())),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.accentPink,
-                  border: Border.all(color: Colors.black, width: 1.5),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(offset: Offset(4, 4), color: Colors.black)
-                  ],
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
+  Widget _dayOverCard() {
+    return GestureDetector(
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const MarkAttendanceScreen())),
+      child: Container(
+        height: 180,
+        decoration: BoxDecoration(
+          color: AppColors.accentPink,
+          border: Border.all(color: Colors.black, width: 1.5),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [
+            BoxShadow(offset: Offset(1, 2), color: Colors.black)
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6.5),
+          child: Stack(
+            children: [
+              _shineStripes(const Color(0xFFFFAAAA)),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _shineStripes(const Color(0xFFFFAAAA)),
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text(
-                                'DAY IS OVER',
-                                style: TextStyle(
-                                  fontFamily: 'Public Sans',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Mark Your\nAttendance',
-                                style: TextStyle(
-                                  fontFamily: 'Lexend Mega',
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.5,
-                                  color: Colors.black,
-                                  height: 1.1,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'Mark Now →',
-                                  style: TextStyle(
-                                    fontFamily: 'Public Sans',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                        const Text(
+                          'DAY IS OVER',
+                          style: TextStyle(
+                            fontFamily: 'Public Sans',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black,
                           ),
                         ),
-                        const Icon(Icons.check_circle_outline,
-                            size: 52, color: Colors.black),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Mark Your\nAttendance',
+                          style: TextStyle(
+                            fontFamily: 'Lexend Mega',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                            color: Colors.black,
+                            height: 1.2,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
+                    ),
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Mark Now →',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
-
-  Widget _stackBackCard() => Container(
-        height: 150,
-        decoration: BoxDecoration(
-          color: AppColors.accentPink.withValues(alpha: 0.7),
-          border: Border.all(color: Colors.black, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
-        ),
-      );
 
   // ─── Timetable carousel ────────────────────────────────────────────────────
 
@@ -1072,11 +1162,11 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
-                offset: const Offset(4, 4),
+                offset: const Offset(1, 1),
                 color: isMarked ? const Color(0xFF16A34A) : Colors.black,
               ),
               const BoxShadow(
-                  offset: Offset(0, 8),
+                  offset: Offset(0, 2),
                   blurRadius: 24,
                   color: Color(0x1E003FB1)),
             ],
@@ -1152,6 +1242,61 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ─── Configure subjects empty state ────────────────────────────────────────
+
+  Widget _configureSubjectsCard() {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SyllabusSelectionScreen()),
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.accentBlue,
+          border: Border.all(color: Colors.black, width: 1.5),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [
+            BoxShadow(offset: Offset(1, 1), color: Colors.black),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.menu_book_outlined, size: 32, color: Colors.black),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Configure your subjects',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'No subjects set up for this semester yet. Tap to add them.',
+                    style: TextStyle(
+                      fontFamily: 'Public Sans',
+                      fontSize: 12,
+                      color: Colors.black.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward, size: 20, color: Colors.black),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ─── Syllabus carousel ─────────────────────────────────────────────────────
 
   Widget _syllabusCarousel() {
@@ -1166,8 +1311,7 @@ class _HomeScreenState extends State<HomeScreen> {
           final color = s.isElective
               ? AppColors.accentPurple
               : _cardColors[i % _cardColors.length];
-          final typeLabel = s.courseType?.toUpperCase() ??
-              (s.isElective ? 'ELECTIVE' : 'THEORY');
+          final typeLabel = s.isElective ? 'ELECTIVE' : 'THEORY';
           return Container(
             width: 155,
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
@@ -1176,7 +1320,7 @@ class _HomeScreenState extends State<HomeScreen> {
               border: Border.all(color: Colors.black, width: 1.5),
               borderRadius: BorderRadius.circular(8),
               boxShadow: const [
-                BoxShadow(offset: Offset(4, 4), color: Colors.black),
+                BoxShadow(offset: Offset(1, 1), color: Colors.black),
               ],
             ),
             child: Column(
@@ -1431,7 +1575,7 @@ class _HomeScreenState extends State<HomeScreen> {
             border: Border.all(color: Colors.black, width: 1.5),
             borderRadius: BorderRadius.circular(8),
             boxShadow: const [
-              BoxShadow(offset: Offset(4, 4), color: Colors.black)
+              BoxShadow(offset: Offset(1, 1), color: Colors.black)
             ],
           ),
           child: const Row(
@@ -1503,7 +1647,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: AppColors.showAllButton,
                     borderRadius: BorderRadius.circular(6),
                     boxShadow: const [
-                      BoxShadow(offset: Offset(2, 2), color: Colors.black)
+                      BoxShadow(offset: Offset(1, 1), color: Colors.black)
                     ],
                   ),
                   child: const Text(

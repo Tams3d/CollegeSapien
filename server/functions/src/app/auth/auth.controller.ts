@@ -3,6 +3,10 @@ import { AuthRequest } from '../../shared/middlewares/auth.middleware';
 import { OnboardingSchema, ProfileUpdateSchema } from './auth.model';
 import * as admin from 'firebase-admin';
 import { zodError } from '../../shared/zod-error';
+import {
+  computeAttendanceSummary,
+  ensureAttendanceTrackingStartDate,
+} from '../attendance/attendance.controller';
 // import { sendLoginLinkEmail } from '../../ses/ses.service';
 
 const COOKIE_OPTIONS = {
@@ -89,17 +93,62 @@ export const syncAuthProfile = async (req: AuthRequest, res: Response) => {
       patch.isVerified = true;
     }
 
-    await userRef.update(patch);
-    const updatedDoc = await userRef.get();
+    const [, updatedDoc] = await Promise.all([userRef.update(patch), userRef.get()]);
     setSessionCookie(req, res);
 
     const finalData = updatedDoc.data()!;
     const onboardingRequired = !finalData.collegeId || !finalData.department || !finalData.semester;
+
+    if (onboardingRequired) {
+      return res.status(200).json({
+        message: 'Profile synchronized',
+        onboardingRequired,
+        auth: buildAuthSnapshot(req),
+        user: finalData,
+      });
+    }
+
+    const semester = finalData.semester || 1;
+    const [attendanceSnapshot, timetableDoc, syllabusDoc] = await Promise.all([
+      userRef.collection('attendance').get(),
+      userRef.collection('semesters').doc(String(semester)).get(),
+      userRef.collection('syllabus').doc(String(semester)).get(),
+    ]);
+
+    let attendanceSummary: unknown[] = [];
+    const timetable = timetableDoc.data();
+    if (timetable?.subjects) {
+      const timetableRef = userRef.collection('semesters').doc(String(semester));
+      const attendanceTrackingStartDate = await ensureAttendanceTrackingStartDate(
+        timetableRef,
+        timetable
+      );
+      const threshold = (finalData.attendanceThreshold || 75) / 100;
+      const timezoneOffsetMinutes = Number.parseInt(
+        req.query?.timezoneOffsetMinutes?.toString() || '0',
+        10
+      );
+      const safeTimezoneOffsetMinutes = Number.isNaN(timezoneOffsetMinutes)
+        ? 0
+        : timezoneOffsetMinutes;
+      attendanceSummary = computeAttendanceSummary(
+        timetable.subjects,
+        attendanceSnapshot.docs.map(doc => doc.data()),
+        threshold,
+        attendanceTrackingStartDate,
+        new Date(),
+        safeTimezoneOffsetMinutes
+      );
+    }
+
     return res.status(200).json({
       message: 'Profile synchronized',
       onboardingRequired,
       auth: buildAuthSnapshot(req),
       user: finalData,
+      attendanceSummary,
+      timetable: timetable?.subjects ? { subjects: timetable.subjects } : null,
+      savedSubjects: syllabusDoc.exists ? syllabusDoc.data() : null,
     });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -271,6 +320,20 @@ export const getMe = async (req: AuthRequest, res: Response) => {
   }
 };
 
+const deleteSubcollection = async (
+  userRef: admin.firestore.DocumentReference,
+  name: string
+) => {
+  const snap = await userRef.collection(name).get();
+  if (snap.empty) return;
+  // Firestore batches cap at 500 operations — chunk large subcollections
+  for (let i = 0; i < snap.docs.length; i += 400) {
+    const batch = firestore().batch();
+    snap.docs.slice(i, i + 400).forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  }
+};
+
 export const updateMe = async (req: AuthRequest, res: Response) => {
   try {
     const uid = req.user?.uid;
@@ -290,12 +353,32 @@ export const updateMe = async (req: AuthRequest, res: Response) => {
       patch.collegeName = college.data.name;
     }
 
-    await firestore()
-      .collection('users')
-      .doc(uid)
-      .update(patch);
+    const userRef = firestore().collection('users').doc(uid);
+    const existingDoc = await userRef.get();
+    const existing = existingDoc.data() || {};
 
-    return res.status(200).json({ message: 'Profile updated' });
+    // A different college or department invalidates everything tied to the
+    // old curriculum — attendance records, per-semester timetables and saved
+    // subjects. The client confirms with the user before sending this change.
+    const collegeChanged = Boolean(
+      validatedData.collegeId && validatedData.collegeId !== existing.collegeId
+    );
+    const departmentChanged = Boolean(
+      validatedData.department && validatedData.department !== existing.department
+    );
+    const clearedAcademicData = collegeChanged || departmentChanged;
+
+    if (clearedAcademicData) {
+      await Promise.all([
+        deleteSubcollection(userRef, 'attendance'),
+        deleteSubcollection(userRef, 'semesters'),
+        deleteSubcollection(userRef, 'syllabus'),
+      ]);
+    }
+
+    await userRef.update(patch);
+
+    return res.status(200).json({ message: 'Profile updated', clearedAcademicData });
   } catch (error: any) {
     return res.status(400).json({ error: zodError(error) });
   }
@@ -308,12 +391,9 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
 
     const userRef = firestore().collection('users').doc(uid);
 
-    const subcollections = ['attendance', 'semesters', 'cgpa'];
+    const subcollections = ['attendance', 'semesters', 'syllabus', 'cgpa'];
     for (const sub of subcollections) {
-      const snap = await userRef.collection(sub).get();
-      const batch = firestore().batch();
-      snap.docs.forEach(doc => batch.delete(doc.ref));
-      if (!snap.empty) await batch.commit();
+      await deleteSubcollection(userRef, sub);
     }
 
     await userRef.delete();

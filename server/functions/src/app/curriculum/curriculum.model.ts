@@ -1,20 +1,13 @@
 import { z } from 'zod';
 
 export const CurriculumSubjectSchema = z.object({
-  semester: z.union([z.string(), z.number()]).transform(v => String(v)),
-  parent_semester: z.number().nullable().optional(),
+  semester: z.number().int().nullable().optional(),
   subject_code: z.string().optional().default(''),
   subject_name: z.string().min(1),
-  course_type: z.string().optional().default(''),
-  l_t_p: z.string().optional().default(''),
-  tcp: z.number().nullable().optional(),
   credits: z.number().nullable().optional(),
   category: z.string().optional().default(''),
-  is_elective: z.boolean().optional().default(false),
   elective_type: z.string().nullable().optional(),
   record_type: z.string().optional().default('core'),
-  elective_stream: z.string().nullable().optional(),
-  options_from: z.string().nullable().optional(),
 });
 
 export const CurriculumEnvelopeSchema = z.object({
