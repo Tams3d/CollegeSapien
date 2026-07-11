@@ -1,18 +1,130 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/app_state_notifier.dart';
+import '../../services/api_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 
-class CreateEventScreen extends StatelessWidget {
+class CreateEventScreen extends StatefulWidget {
   const CreateEventScreen({super.key});
 
-  Future<void> _openGuide() async {
-    final uri = Uri.parse(
-      'https://github.com/CodeSapiens-in/CollegeSapien/blob/main/CONTRIBUTING.md',
+  @override
+  State<CreateEventScreen> createState() => _CreateEventScreenState();
+}
+
+class _CreateEventScreenState extends State<CreateEventScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _communityController = TextEditingController();
+  final _logoController = TextEditingController();
+  final _linkController = TextEditingController();
+  final _dateController = TextEditingController();
+
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _locationController.dispose();
+    _communityController.dispose();
+    _logoController.dispose();
+    _linkController.dispose();
+    _dateController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primaryYellow,
+              onPrimary: Colors.black,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      // Ignore launch failures; the screen already shows the manual steps.
+
+    if (picked != null) {
+      final y = picked.year.toString();
+      final m = picked.month.toString().padLeft(2, '0');
+      final d = picked.day.toString().padLeft(2, '0');
+      setState(() {
+        _dateController.text = "$y-$m-$d";
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final body = {
+        'eventName': _nameController.text.trim(),
+        'location': _locationController.text.trim(),
+        'communityName': _communityController.text.trim(),
+        'communityLogo': _logoController.text.trim(),
+        'eventLink': _linkController.text.trim(),
+        'eventDate': _dateController.text.trim(),
+      };
+
+      await ApiService.instance.post('/events', body);
+
+      if (mounted) {
+        // Invalidate cached events so home and all events list reloads them
+        Provider.of<AppStateNotifier>(context, listen: false).invalidateEvents();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Container(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: const Text(
+                'Event submitted successfully! Pending admin approval.',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            backgroundColor: AppColors.accentBlue,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Colors.black, width: 2),
+            ),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error submitting event: $e',
+              style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -23,6 +135,7 @@ class CreateEventScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
+            // Custom Navigation Header
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
               child: Row(
@@ -45,7 +158,7 @@ class CreateEventScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
                   const Text(
-                    'ADD AN EVENT',
+                    'SUGGEST AN EVENT',
                     style: TextStyle(
                       fontFamily: 'Lexend Mega',
                       fontSize: 16,
@@ -60,128 +173,172 @@ class CreateEventScreen extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: AppTheme.cardDecoration(color: Color(0xFFFFFDF7)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Share something worth showing up for',
-                            style: TextStyle(
-                              fontFamily: 'Lexend Mega',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: AppTheme.cardDecoration(color: Colors.white),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Event Details',
+                              style: TextStyle(
+                                fontFamily: 'Lexend Mega',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Event Name',
+                                hintText: 'e.g., HackChennai 2026',
+                              ),
+                              validator: (v) => v == null || v.trim().isEmpty
+                                  ? 'Please enter the event name'
+                                  : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _locationController,
+                              decoration: const InputDecoration(
+                                labelText: 'Venue / Location',
+                                hintText: 'e.g., Main Auditorium, IIT Madras',
+                              ),
+                              validator: (v) => v == null || v.trim().isEmpty
+                                  ? 'Please enter the location'
+                                  : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _dateController,
+                              readOnly: true,
+                              onTap: _selectDate,
+                              decoration: InputDecoration(
+                                labelText: 'Event Date',
+                                hintText: 'YYYY-MM-DD',
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.calendar_today, color: Colors.black),
+                                  onPressed: _selectDate,
+                                ),
+                              ),
+                              validator: (v) => v == null || v.trim().isEmpty
+                                  ? 'Please select the event date'
+                                  : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _linkController,
+                              keyboardType: TextInputType.url,
+                              decoration: const InputDecoration(
+                                labelText: 'Registration / Event Link',
+                                hintText: 'https://example.com/register',
+                              ),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'Please enter the event link';
+                                }
+                                if (!v.trim().startsWith('http://') &&
+                                    !v.trim().startsWith('https://')) {
+                                  return 'Must be a valid URL starting with http/https';
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: AppTheme.cardDecoration(color: Colors.white),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Organizer / Community',
+                              style: TextStyle(
+                                fontFamily: 'Lexend Mega',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _communityController,
+                              decoration: const InputDecoration(
+                                labelText: 'Community Name',
+                                hintText: 'e.g., Google Developer Groups',
+                              ),
+                              validator: (v) => v == null || v.trim().isEmpty
+                                  ? 'Please enter the community name'
+                                  : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _logoController,
+                              keyboardType: TextInputType.url,
+                              decoration: const InputDecoration(
+                                labelText: 'Community Logo URL (Optional)',
+                                hintText: 'https://example.com/logo.png',
+                              ),
+                              validator: (v) {
+                                if (v != null && v.trim().isNotEmpty) {
+                                  if (!v.trim().startsWith('http://') &&
+                                      !v.trim().startsWith('https://')) {
+                                    return 'Must be a valid URL starting with http/https';
+                                  }
+                                }
+                                return null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryYellow,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(color: Colors.black, width: 2),
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Events are added through a short pull request. Update the event data in the repo, send it in, and it will appear for the right students.',
-                            style: TextStyle(
-                              fontFamily: 'Public Sans',
-                              fontSize: 14,
-                              color: Colors.black,
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          _stepTile(
-                            '1',
-                            'Check whether your college or club is already listed in community.json.',
-                          ),
-                          const SizedBox(height: 10),
-                          _stepTile(
-                            '2',
-                            'Add the event details to events.json, including the title, date, venue, and registration link.',
-                          ),
-                          const SizedBox(height: 10),
-                          _stepTile(
-                            '3',
-                            'Open a pull request with a clear title so the event can be reviewed and published.',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _openGuide,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryYellow,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(color: Colors.black, width: 2),
-                          ),
-                        ),
-                        child: const Text(
-                          'Open guide',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                )
+                              : const Text(
+                                  'Submit for Approval',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black,
+                                  ),
+                                ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _stepTile(String number, String text) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.accentBlue.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Colors.black,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              number,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontFamily: 'Public Sans',
-                fontSize: 14,
-                color: Colors.black,
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -16,7 +16,6 @@ import '../../services/attendance_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/cache_service.dart';
 import '../../services/college_service.dart';
-import '../../services/local_events_service.dart';
 import '../../services/timetable_service.dart';
 import '../profile/profile_screen.dart';
 import '../../models/syllabus_models.dart';
@@ -327,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
       List<TimetableSubject>? subjects = appState.timetableSubjects;
       subjects ??= await TimetableService().getAllSubjects();
 
-      if (mounted) {
+      if (mounted && subjects != null) {
         appState.setTimetableSubjects(subjects);
         setState(() {
           _processTodayClasses(subjects!);
@@ -383,9 +382,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadEvents() async {
-    final appState = Provider.of<AppStateNotifier>(context, listen: false);
-
     try {
+      final appState = Provider.of<AppStateNotifier>(context, listen: false);
+
       // Check if we have cached events that are still valid
       if (appState.events != null) {
         if (mounted) {
@@ -405,21 +404,27 @@ class _HomeScreenState extends State<HomeScreen> {
           .where((e) => e.eventName.isNotEmpty)
           .toList();
 
-      final shown = _sortEvents(all);
+        // Sort: upcoming first (date >= today), then past most-recent first
+        final today = DateTime.now();
+        final todayDate = DateTime(today.year, today.month, today.day);
 
-      if (mounted) {
-        appState.setEvents(shown);
-        setState(() {
-          _allEvents = shown;
-          _shownEvents = shown.take(2).toList();
-          _hasMoreEvents = shown.length > 2;
-          _loadingEvents = false;
-        });
-      }
-    } catch (_) {
-      try {
-        final localEvents = await LocalEventsService.loadEvents();
-        final shown = _sortEvents(localEvents);
+        final upcoming = all.where((e) {
+          final d = DateTime.tryParse(e.eventDate);
+          return d != null && !d.isBefore(todayDate);
+        }).toList()
+          ..sort((a, b) => DateTime.parse(a.eventDate)
+              .compareTo(DateTime.parse(b.eventDate)));
+
+        final shown = upcoming.isNotEmpty ? upcoming : all
+          ..sort((a, b) {
+            final da = DateTime.tryParse(a.eventDate);
+            final db = DateTime.tryParse(b.eventDate);
+            if (da == null && db == null) return 0;
+            if (da == null) return 1;
+            if (db == null) return -1;
+            return db.compareTo(da);
+          });
+
         if (mounted) {
           appState.setEvents(shown);
           setState(() {
@@ -429,39 +434,9 @@ class _HomeScreenState extends State<HomeScreen> {
             _loadingEvents = false;
           });
         }
-      } catch (_) {
-        if (mounted) setState(() => _loadingEvents = false);
-      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingEvents = false);
     }
-  }
-
-  List<EventItem> _sortEvents(List<EventItem> events) {
-    final all = events.where((e) => e.eventName.isNotEmpty).toList();
-
-    final today = DateTime.now();
-    final todayDate = DateTime(today.year, today.month, today.day);
-
-    final upcoming = all.where((e) {
-      final d = DateTime.tryParse(e.eventDate);
-      return d != null && !d.isBefore(todayDate);
-    }).toList()
-      ..sort((a, b) => DateTime.parse(a.eventDate).compareTo(DateTime.parse(b.eventDate)));
-
-    if (upcoming.isNotEmpty) {
-      return upcoming;
-    }
-
-    final sorted = List<EventItem>.from(all)
-      ..sort((a, b) {
-        final da = DateTime.tryParse(a.eventDate);
-        final db = DateTime.tryParse(b.eventDate);
-        if (da == null && db == null) return 0;
-        if (da == null) return 1;
-        if (db == null) return -1;
-        return db.compareTo(da);
-      });
-
-    return sorted;
   }
 
   // ─── Computed ──────────────────────────────────────────────────────────────
@@ -572,7 +547,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               const SizedBox(height: 24),
               _sectionHeader(
-                "Upcoming events",
+                "Events Near You",
                 trailing: GestureDetector(
                   onTap: () => Navigator.push(
                     context,
@@ -594,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Icon(Icons.add, size: 10, color: Colors.black),
                         SizedBox(width: 2),
                         Text(
-                          'ADD',
+                          'SUGGEST',
                           style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 11,
@@ -1289,7 +1264,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: AppTheme.cardDecoration(color: AppColors.accentBlue),
-        child: const Text('No events yet — add one when something is coming up.',
+        child: const Text('No upcoming events found.',
             style: TextStyle(fontFamily: 'Public Sans', fontSize: 14)),
       );
     }
@@ -1349,7 +1324,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     child: Text(
-                      event.location.isNotEmpty ? event.location.toUpperCase() : 'CAMPUS EVENT',
+                      event.location.toUpperCase(),
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
