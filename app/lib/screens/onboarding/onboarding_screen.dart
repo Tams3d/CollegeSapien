@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_colors.dart';
+import '../../widgets/responsive_layout.dart';
 import 'user_details_screen.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -75,7 +76,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Column(
+        child: MaxWidthContent(
+          maxWidth: 480,
+          child: Column(
           children: [
             // Skip Button
             Align(
@@ -152,6 +155,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 40),
           ],
+          ),
         ),
       ),
     );

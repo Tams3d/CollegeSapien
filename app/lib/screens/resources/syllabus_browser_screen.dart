@@ -9,6 +9,8 @@ import '../../services/resource_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/department_constants.dart';
+import '../../widgets/responsive_layout.dart';
+import '../../widgets/resource_grid_section.dart';
 import '../../widgets/searchable_dropdown.dart';
 
 class SyllabusBrowserScreen extends StatefulWidget {
@@ -313,7 +315,9 @@ class _SyllabusBrowserScreenState extends State<SyllabusBrowserScreen> {
                         matchesReg;
                   }).toList();
 
-                  return ListView(
+                  return MaxWidthContent(
+                    maxWidth: 1000,
+                    child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
                       if (profileMatch != null) ...[
@@ -405,8 +409,12 @@ class _SyllabusBrowserScreenState extends State<SyllabusBrowserScreen> {
                           child: const Text('No syllabus documents found.'),
                         )
                       else
-                        ...items.map((item) => _buildSyllabusCard(item)),
+                        ResourceGridSection(
+                          items: items,
+                          cardBuilder: _buildSyllabusCard,
+                        ),
                     ],
+                    ),
                   );
                 },
               ),
@@ -417,10 +425,11 @@ class _SyllabusBrowserScreenState extends State<SyllabusBrowserScreen> {
     );
   }
 
-  Widget _buildSyllabusCard(HubResource item, {bool highlighted = false}) {
+  Widget _buildSyllabusCard(HubResource item,
+      {bool highlighted = false, bool includeMargin = true}) {
     final url = item.fileUrl;
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: includeMargin ? const EdgeInsets.only(bottom: 16) : null,
       padding: const EdgeInsets.all(20),
       decoration: AppTheme.cardDecoration(
           color: highlighted ? AppColors.primaryYellow : AppColors.accentGreen),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/responsive_layout.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
@@ -60,7 +61,9 @@ class HelpScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: ListView(
+        child: MaxWidthContent(
+          maxWidth: 600,
+          child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
             Container(
@@ -119,6 +122,7 @@ class HelpScreen extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

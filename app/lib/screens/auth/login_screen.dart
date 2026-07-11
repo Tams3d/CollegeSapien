@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/responsive_layout.dart';
 import 'signup_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../home/main_navigation.dart';
@@ -138,11 +139,34 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: 32),
-          child: Form(
-            key: _formKey,
-            child: Column(
+        child: ResponsiveLayout(
+          mobile: (_) => SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: w * 0.06, vertical: 32),
+            child: Form(key: _formKey, child: _formColumn()),
+          ),
+          // Desktop: the form becomes a centered card on the page background
+          // instead of an edge-to-edge column stretched across the window.
+          desktop: (_) => Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Container(
+                width: 440,
+                padding: const EdgeInsets.all(32),
+                decoration: AppTheme.cardDecoration(
+                  color: Colors.white,
+                  shadowOffset: const Offset(6, 6),
+                ),
+                child: Form(key: _formKey, child: _formColumn()),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _formColumn() {
+    return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 24),
@@ -325,10 +349,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
               ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 

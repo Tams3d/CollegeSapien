@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/responsive_layout.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -38,7 +39,9 @@ class AboutScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
-          child: Column(
+          child: MaxWidthContent(
+            maxWidth: 600,
+            child: Column(
             children: [
               const SizedBox(height: 20),
               Container(
@@ -137,6 +140,7 @@ class AboutScreen extends StatelessWidget {
                 ],
               ),
             ],
+          ),
           ),
         ),
       ),

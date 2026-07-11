@@ -10,6 +10,8 @@ import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/responsive_layout.dart';
+import '../../widgets/resource_grid_section.dart';
 
 class QpHubScreen extends StatefulWidget {
   const QpHubScreen({super.key});
@@ -348,7 +350,9 @@ class _QpHubScreenState extends State<QpHubScreen> {
                     return matchesSearch && matchesDept && matchesReg;
                   }).toList();
 
-                  return ListView(
+                  return MaxWidthContent(
+                    maxWidth: 1000,
+                    child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
                       // Search field
@@ -466,8 +470,12 @@ class _QpHubScreenState extends State<QpHubScreen> {
                           child: const Text('No approved question papers yet.'),
                         )
                       else
-                        ...resources.map(_buildQpCard),
+                        ResourceGridSection(
+                          items: resources,
+                          cardBuilder: _buildQpCard,
+                        ),
                     ],
+                    ),
                   );
                 },
               ),
@@ -478,9 +486,9 @@ class _QpHubScreenState extends State<QpHubScreen> {
     );
   }
 
-  Widget _buildQpCard(HubResource resource) {
+  Widget _buildQpCard(HubResource resource, {bool includeMargin = true}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: includeMargin ? const EdgeInsets.only(bottom: 16) : null,
       padding: const EdgeInsets.all(20),
       decoration: AppTheme.cardDecoration(color: AppColors.accentPink),
       child: Column(

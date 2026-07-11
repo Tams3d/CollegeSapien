@@ -5,6 +5,9 @@ import '../services/attendance_service.dart';
 import '../services/cache_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_theme.dart';
+import '../utils/breakpoints.dart';
+import '../utils/app_spacing.dart';
+import '../widgets/responsive_layout.dart';
 import 'attendance/mark_attendance_screen.dart';
 import 'timetable_list_screen.dart';
 
@@ -114,37 +117,96 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
             return RefreshIndicator(
               onRefresh: () async => _refresh(),
-              child: ListView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.045,
-                  vertical: 20,
-                ),
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-                  _buildAverageCard(average, summaries),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'SUBJECT WISE ANALYSIS',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF191C1E),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (summaries.isEmpty)
-                    _buildEmptyState()
-                  else
-                    ...summaries.map(_buildSubjectCard),
-                  const SizedBox(height: 8),
-                  _buildTipCard(),
-                  const SizedBox(height: 80),
-                ],
+              child: ResponsiveLayout(
+                mobile: (_) => _mobileList(screenWidth, average, summaries),
+                desktop: (_) => _desktopGrid(context, average, summaries),
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _mobileList(
+      double screenWidth, double average, List<AttendanceSummary> summaries) {
+    return ListView(
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.045,
+        vertical: 20,
+      ),
+      children: [
+        _buildHeader(),
+        const SizedBox(height: 24),
+        _buildAverageCard(average, summaries),
+        const SizedBox(height: 24),
+        const Text(
+          'SUBJECT WISE ANALYSIS',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF191C1E),
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (summaries.isEmpty)
+          _buildEmptyState()
+        else
+          ...summaries.map(_buildSubjectCard),
+        const SizedBox(height: 8),
+        _buildTipCard(),
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  // Desktop: subject cards render as a 2–3 column grid instead of one per
+  // row, sized off the available width via LayoutBuilder inside ResponsiveLayout.
+  Widget _desktopGrid(
+      BuildContext context, double average, List<AttendanceSummary> summaries) {
+    final width = MediaQuery.of(context).size.width;
+    final columns = Breakpoints.isWide(width) ? 3 : 2;
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(AppSpacing.pagePadding(width)),
+      child: MaxWidthContent(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            SizedBox(height: AppSpacing.sectionGap(width)),
+            _buildAverageCard(average, summaries),
+            SizedBox(height: AppSpacing.sectionGap(width)),
+            const Text(
+              'SUBJECT WISE ANALYSIS',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF191C1E),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (summaries.isEmpty)
+              _buildEmptyState()
+            else
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: summaries.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  mainAxisSpacing: AppSpacing.lg,
+                  crossAxisSpacing: AppSpacing.lg,
+                  childAspectRatio: 1.35,
+                ),
+                itemBuilder: (_, i) =>
+                    _buildSubjectCard(summaries[i], includeMargin: false),
+              ),
+            const SizedBox(height: 24),
+            _buildTipCard(),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );
@@ -214,11 +276,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     );
   }
 
-  Widget _buildSubjectCard(AttendanceSummary summary) {
+  Widget _buildSubjectCard(AttendanceSummary summary,
+      {bool includeMargin = true}) {
     final color =
         summary.percentage >= 75 ? AppColors.accentGreen : AppColors.accentPink;
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: includeMargin ? const EdgeInsets.only(bottom: 16) : null,
       padding: const EdgeInsets.all(20),
       decoration: AppTheme.cardDecoration(color: color),
       child: Column(

@@ -7,6 +7,7 @@ import '../../screens/auth/login_screen.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_themes.dart';
 import '../../utils/app_colors.dart';
+import '../../widgets/responsive_layout.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -109,7 +110,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (context, _) => SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            child: Column(
+            child: MaxWidthContent(
+              maxWidth: 600,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
@@ -345,6 +348,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ],
+              ),
             ),
           ),
         ),
