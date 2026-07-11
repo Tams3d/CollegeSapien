@@ -48,17 +48,14 @@ const save = () => {
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
-    @click.self="emit('cancel')"
-  >
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6">
+  <Modal max-width="max-w-lg" z-index="z-[60]" @close="emit('cancel')">
+    <div class="p-6">
       <h3 class="text-base font-semibold text-gray-900 mb-4">
         {{ isNew ? "Add subject" : "Edit subject" }}
       </h3>
 
-      <div class="grid grid-cols-2 gap-3">
-        <div class="col-span-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="sm:col-span-2">
           <label class="block text-xs font-medium text-gray-600 mb-1"
             >Subject name *</label
           >
@@ -155,5 +152,5 @@ const save = () => {
         </button>
       </div>
     </div>
-  </div>
+  </Modal>
 </template>

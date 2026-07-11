@@ -94,7 +94,7 @@ const toggleBan = async () => {
 
     <template v-else-if="user">
       <div
-        class="bg-white rounded-xl border border-gray-200 p-6 mb-4 flex items-start justify-between gap-4"
+        class="bg-white rounded-xl border border-gray-200 p-6 mb-4 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
       >
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-2">
@@ -143,11 +143,8 @@ const toggleBan = async () => {
     </template>
 
     <!-- Role modal -->
-    <div
-      v-if="showRoleModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-    >
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+    <Modal v-if="showRoleModal" @close="showRoleModal = false">
+      <div class="p-6">
         <h3 class="text-base font-semibold text-gray-900 mb-4">Assign Role</h3>
         <select
           v-model="selectedRole"
@@ -181,7 +178,7 @@ const toggleBan = async () => {
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
 
     <ConfirmModal
       v-if="showBanModal"

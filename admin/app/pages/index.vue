@@ -62,7 +62,7 @@ onMounted(async () => {
       {{ statsError }}
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
       <StatCard
         label="Total Users"
         :value="totalUsers"
@@ -93,7 +93,7 @@ onMounted(async () => {
       />
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       <StatCard
         label="Approved QPs"
         :value="resourceStats?.approvedQPs ?? '—'"

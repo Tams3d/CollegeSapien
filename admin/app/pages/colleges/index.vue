@@ -311,38 +311,40 @@ const confirmDeleteDept = async () => {
         <div class="px-4 py-3 border-b border-gray-100 text-sm font-medium text-gray-700">
           All Colleges ({{ colleges.length }})
         </div>
-        <div v-if="loading" class="p-4 text-sm text-gray-400">Loading…</div>
-        <div
-          v-for="college in colleges"
-          :key="college.id"
-          class="px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors group"
-          :class="
-            selectedCollege?.id === college.id
-              ? 'bg-yellow-50 border-l-2 border-l-yellow-400'
-              : ''
-          "
-          @click="openEdit(college)"
-        >
-          <div class="flex items-center justify-between gap-2">
-            <div class="min-w-0">
-              <div class="font-medium text-gray-900 text-sm truncate">
-                {{ college.name }}
+        <div class="max-h-96 overflow-y-auto lg:max-h-none lg:overflow-visible">
+          <div v-if="loading" class="p-4 text-sm text-gray-400">Loading…</div>
+          <div
+            v-for="college in colleges"
+            :key="college.id"
+            class="px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors group"
+            :class="
+              selectedCollege?.id === college.id
+                ? 'bg-yellow-50 border-l-2 border-l-yellow-400'
+                : ''
+            "
+            @click="openEdit(college)"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="font-medium text-gray-900 text-sm truncate">
+                  {{ college.name }}
+                </div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  {{ college.code }} · {{ college.city ?? "No city" }}
+                </div>
               </div>
-              <div class="text-xs text-gray-500 mt-0.5">
-                {{ college.code }} · {{ college.city ?? "No city" }}
-              </div>
+              <button
+                class="shrink-0 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Delete"
+                @click.stop="pendingDelete = college"
+              >
+                <Icon name="i-heroicons-trash" class="w-4 h-4" />
+              </button>
             </div>
-            <button
-              class="shrink-0 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Delete"
-              @click.stop="pendingDelete = college"
-            >
-              <Icon name="i-heroicons-trash" class="w-4 h-4" />
-            </button>
           </div>
-        </div>
-        <div v-if="!loading && colleges.length === 0" class="p-4 text-sm text-gray-400">
-          No colleges found.
+          <div v-if="!loading && colleges.length === 0" class="p-4 text-sm text-gray-400">
+            No colleges found.
+          </div>
         </div>
       </div>
 
@@ -367,7 +369,7 @@ const confirmDeleteDept = async () => {
                 v-model="formName"
                 type="text"
                 placeholder="e.g. SSN College of Engineering"
-                class="w-[90%] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </div>
             <div>
@@ -376,7 +378,7 @@ const confirmDeleteDept = async () => {
                 v-model="formCode"
                 type="text"
                 placeholder="e.g. SSN"
-                class="w-[90%] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </div>
 
@@ -386,7 +388,7 @@ const confirmDeleteDept = async () => {
                 v-model="formCity"
                 type="text"
                 placeholder="e.g. Chennai"
-                class="w-[90%] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </div>
 
@@ -450,38 +452,40 @@ const confirmDeleteDept = async () => {
         <div class="px-4 py-3 border-b border-gray-100 text-sm font-medium text-gray-700">
           All Departments ({{ departments.length }})
         </div>
-        <div v-if="loadingDepts" class="p-4 text-sm text-gray-400">Loading…</div>
-        <div
-          v-for="dept in departments"
-          :key="dept.id"
-          class="px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors group"
-          :class="
-            selectedDept?.id === dept.id
-              ? 'bg-yellow-50 border-l-2 border-l-yellow-400'
-              : ''
-          "
-          @click="openEditDept(dept)"
-        >
-          <div class="flex items-center justify-between gap-2">
-            <div class="min-w-0">
-              <div class="font-medium text-gray-900 text-sm truncate">
-                {{ dept.name }}
+        <div class="max-h-96 overflow-y-auto lg:max-h-none lg:overflow-visible">
+          <div v-if="loadingDepts" class="p-4 text-sm text-gray-400">Loading…</div>
+          <div
+            v-for="dept in departments"
+            :key="dept.id"
+            class="px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors group"
+            :class="
+              selectedDept?.id === dept.id
+                ? 'bg-yellow-50 border-l-2 border-l-yellow-400'
+                : ''
+            "
+            @click="openEditDept(dept)"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="font-medium text-gray-900 text-sm truncate">
+                  {{ dept.name }}
+                </div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  {{ dept.code }}
+                </div>
               </div>
-              <div class="text-xs text-gray-500 mt-0.5">
-                {{ dept.code }}
-              </div>
+              <button
+                class="shrink-0 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Delete"
+                @click.stop="pendingDeleteDept = dept"
+              >
+                <Icon name="i-heroicons-trash" class="w-4 h-4" />
+              </button>
             </div>
-            <button
-              class="shrink-0 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-              title="Delete"
-              @click.stop="pendingDeleteDept = dept"
-            >
-              <Icon name="i-heroicons-trash" class="w-4 h-4" />
-            </button>
           </div>
-        </div>
-        <div v-if="!loadingDepts && departments.length === 0" class="p-4 text-sm text-gray-400">
-          No departments found.
+          <div v-if="!loadingDepts && departments.length === 0" class="p-4 text-sm text-gray-400">
+            No departments found.
+          </div>
         </div>
       </div>
 
@@ -504,7 +508,7 @@ const confirmDeleteDept = async () => {
                 v-model="deptFormName"
                 type="text"
                 placeholder="e.g. Information Technology"
-                class="w-[90%] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </div>
             <div>
@@ -513,7 +517,7 @@ const confirmDeleteDept = async () => {
                 v-model="deptFormCode"
                 type="text"
                 placeholder="e.g. IT"
-                class="w-[90%] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </div>
             <div class="flex justify-end gap-2 pt-2">
@@ -537,11 +541,8 @@ const confirmDeleteDept = async () => {
     </div>
 
     <!-- Delete College confirm modal -->
-    <div
-      v-if="pendingDelete"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-    >
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+    <Modal v-if="pendingDelete" @close="pendingDelete = null">
+      <div class="p-6">
         <h3 class="text-base font-semibold text-gray-900 mb-2">
           Delete college?
         </h3>
@@ -565,14 +566,11 @@ const confirmDeleteDept = async () => {
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
 
     <!-- Delete Department Confirm Modal -->
-    <div
-      v-if="pendingDeleteDept"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-    >
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+    <Modal v-if="pendingDeleteDept" @close="pendingDeleteDept = null">
+      <div class="p-6">
         <h3 class="text-base font-semibold text-gray-900 mb-2">
           Delete department?
         </h3>
@@ -596,6 +594,6 @@ const confirmDeleteDept = async () => {
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   </div>
 </template>

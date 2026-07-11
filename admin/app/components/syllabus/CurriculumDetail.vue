@@ -164,13 +164,7 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-    @click.self="emit('close')"
-  >
-    <div
-      class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[85vh] overflow-y-auto"
-    >
+  <Modal max-width="max-w-3xl" @close="emit('close')">
       <div
         class="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-start justify-between gap-4"
       >
@@ -184,7 +178,7 @@ const handleDelete = () => {
             {{ curriculum.subjects.length }} subjects
           </p>
         </div>
-        <div v-else class="grid grid-cols-2 gap-2 flex-1">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-1">
           <input
             v-model="editHeader.college"
             placeholder="College name"
@@ -259,60 +253,62 @@ const handleDelete = () => {
               + Add subject
             </button>
           </div>
-          <table class="w-full text-xs">
-            <thead>
-              <tr class="text-left text-gray-400 border-b border-gray-100">
-                <th class="py-1.5 pr-2 font-medium">Code</th>
-                <th class="py-1.5 pr-2 font-medium">Name</th>
-                <th class="py-1.5 pr-2 font-medium">Credits</th>
-                <th class="py-1.5 pr-2 font-medium">Category</th>
-                <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in rows"
-                :key="`${semester}-${row.index}`"
-                class="border-b border-gray-50"
-              >
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.subject_code || "—" }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-900">
-                  {{ row.subject.subject_name }}
-                  <span
-                    v-if="row.subject.record_type === 'elective'"
-                    class="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full"
-                    >Elective</span
-                  >
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.credits ?? "—" }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.category || "—" }}
-                </td>
-                <td v-if="editMode" class="py-1.5 pr-2">
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="text-gray-400 hover:text-gray-700"
-                      title="Edit"
-                      @click="openEditSubject(row.index)"
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-left text-gray-400 border-b border-gray-100">
+                  <th class="py-1.5 pr-2 font-medium">Code</th>
+                  <th class="py-1.5 pr-2 font-medium">Name</th>
+                  <th class="py-1.5 pr-2 font-medium">Credits</th>
+                  <th class="py-1.5 pr-2 font-medium">Category</th>
+                  <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in rows"
+                  :key="`${semester}-${row.index}`"
+                  class="border-b border-gray-50"
+                >
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.subject_code || "—" }}
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-900">
+                    {{ row.subject.subject_name }}
+                    <span
+                      v-if="row.subject.record_type === 'elective'"
+                      class="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full"
+                      >Elective</span
                     >
-                      <Icon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      class="text-gray-400 hover:text-red-500"
-                      title="Delete"
-                      @click="deleteSubject(row.index)"
-                    >
-                      <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.credits ?? "—" }}
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.category || "—" }}
+                  </td>
+                  <td v-if="editMode" class="py-1.5 pr-2">
+                    <div class="flex items-center gap-2">
+                      <button
+                        class="text-gray-400 hover:text-gray-700"
+                        title="Edit"
+                        @click="openEditSubject(row.index)"
+                      >
+                        <Icon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        class="text-gray-400 hover:text-red-500"
+                        title="Delete"
+                        @click="deleteSubject(row.index)"
+                      >
+                        <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div v-for="[pool, rows] in optionGroups" :key="`pool-${pool}`">
@@ -334,51 +330,53 @@ const handleDelete = () => {
               + Add option
             </button>
           </div>
-          <table class="w-full text-xs">
-            <thead>
-              <tr class="text-left text-gray-400 border-b border-gray-100">
-                <th class="py-1.5 pr-2 font-medium">Name</th>
-                <th class="py-1.5 pr-2 font-medium">Category</th>
-                <th class="py-1.5 pr-2 font-medium">Credits</th>
-                <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in rows"
-                :key="`${pool}-${row.index}`"
-                class="border-b border-gray-50"
-              >
-                <td class="py-1.5 pr-2 text-gray-900">
-                  {{ row.subject.subject_name }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.category || "—" }}
-                </td>
-                <td class="py-1.5 pr-2 text-gray-500">
-                  {{ row.subject.credits ?? "—" }}
-                </td>
-                <td v-if="editMode" class="py-1.5 pr-2">
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="text-gray-400 hover:text-gray-700"
-                      title="Edit"
-                      @click="openEditSubject(row.index)"
-                    >
-                      <Icon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      class="text-gray-400 hover:text-red-500"
-                      title="Delete"
-                      @click="deleteSubject(row.index)"
-                    >
-                      <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="text-left text-gray-400 border-b border-gray-100">
+                  <th class="py-1.5 pr-2 font-medium">Name</th>
+                  <th class="py-1.5 pr-2 font-medium">Category</th>
+                  <th class="py-1.5 pr-2 font-medium">Credits</th>
+                  <th v-if="editMode" class="py-1.5 pr-2 font-medium w-16"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="row in rows"
+                  :key="`${pool}-${row.index}`"
+                  class="border-b border-gray-50"
+                >
+                  <td class="py-1.5 pr-2 text-gray-900">
+                    {{ row.subject.subject_name }}
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.category || "—" }}
+                  </td>
+                  <td class="py-1.5 pr-2 text-gray-500">
+                    {{ row.subject.credits ?? "—" }}
+                  </td>
+                  <td v-if="editMode" class="py-1.5 pr-2">
+                    <div class="flex items-center gap-2">
+                      <button
+                        class="text-gray-400 hover:text-gray-700"
+                        title="Edit"
+                        @click="openEditSubject(row.index)"
+                      >
+                        <Icon name="i-heroicons-pencil-square" class="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        class="text-gray-400 hover:text-red-500"
+                        title="Delete"
+                        @click="deleteSubject(row.index)"
+                      >
+                        <Icon name="i-heroicons-trash" class="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <button
@@ -426,14 +424,13 @@ const handleDelete = () => {
           </button>
         </template>
       </div>
-    </div>
+  </Modal>
 
-    <SyllabusSubjectFormModal
-      v-if="subjectModal"
-      :subject="subjectModal.subject"
-      :is-new="subjectModal.index === null"
-      @save="handleSubjectSave"
-      @cancel="subjectModal = null"
-    />
-  </div>
+  <SyllabusSubjectFormModal
+    v-if="subjectModal"
+    :subject="subjectModal.subject"
+    :is-new="subjectModal.index === null"
+    @save="handleSubjectSave"
+    @cancel="subjectModal = null"
+  />
 </template>

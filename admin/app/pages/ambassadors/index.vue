@@ -120,7 +120,7 @@ const revoke = async (user: User) => {
       No campus ambassadors yet.
     </div>
 
-    <div v-else class="bg-white rounded-xl border border-gray-200">
+    <div v-else class="bg-white rounded-xl border border-gray-200 overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
           <tr class="text-xs text-gray-500 border-b border-gray-100">
@@ -168,11 +168,8 @@ const revoke = async (user: User) => {
     </div>
 
     <!-- Promote modal -->
-    <div
-      v-if="showPromoteModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-    >
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+    <Modal v-if="showPromoteModal" @close="showPromoteModal = false">
+      <div class="p-6">
         <h3 class="text-base font-semibold text-gray-900 mb-4">
           {{ selectedUser ? `Edit ${selectedUser.name}` : "Promote a User" }}
         </h3>
@@ -207,6 +204,6 @@ const revoke = async (user: User) => {
           </div>
         </template>
       </div>
-    </div>
+    </Modal>
   </div>
 </template>
