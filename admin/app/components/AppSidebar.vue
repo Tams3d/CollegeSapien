@@ -1,6 +1,12 @@
 <script setup lang="ts">
 const route = useRoute();
 const authStore = useAuthStore();
+const { isOpen, isDesktop, close } = useSidebar();
+
+watch(
+  () => route.path,
+  () => close(),
+);
 
 const isAmbassador = computed(() => authStore.user?.role === "ambassador");
 
@@ -31,12 +37,29 @@ const isActive = (to: string) =>
 </script>
 
 <template>
-  <aside class="w-56 min-h-screen bg-gray-950 flex flex-col">
-    <div class="px-5 py-6 border-b border-gray-800">
-      <span class="text-white font-bold text-lg tracking-tight"
-        >CodeSapiens</span
+  <div
+    v-if="!isDesktop && isOpen"
+    class="fixed inset-0 z-40 bg-black/40 lg:hidden"
+    @click="close"
+  />
+
+  <aside
+    class="fixed inset-y-0 left-0 z-50 w-56 min-h-screen bg-gray-950 flex flex-col transition-transform duration-200 ease-in-out lg:static lg:translate-x-0"
+    :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <div class="px-5 py-6 border-b border-gray-800 flex items-center justify-between">
+      <div>
+        <span class="text-white font-bold text-lg tracking-tight"
+          >CodeSapiens</span
+        >
+        <span class="block text-gray-400 text-xs mt-0.5">Admin Panel</span>
+      </div>
+      <button
+        class="lg:hidden p-1 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800"
+        @click="close"
       >
-      <span class="block text-gray-400 text-xs mt-0.5">Admin Panel</span>
+        <Icon name="i-heroicons-x-mark" class="w-5 h-5" />
+      </button>
     </div>
 
     <nav class="flex-1 px-3 py-4 flex flex-col gap-1">
