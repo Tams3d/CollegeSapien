@@ -47,11 +47,11 @@ const filtered = computed(() =>
         <input
           v-model="search"
           placeholder="Search by name or email…"
-          class="flex-1 min-w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          class="w-full sm:flex-1 sm:min-w-48 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
         />
         <select
           v-model="roleFilter"
-          class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+          class="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
         >
           <option value="all">All roles</option>
           <option value="user">User</option>
@@ -70,31 +70,33 @@ const filtered = computed(() =>
       >
         No users found.
       </div>
-      <table v-else class="w-full text-sm">
-        <thead>
-          <tr class="text-xs text-gray-500 border-b border-gray-100">
-            <th class="px-4 py-3 text-left font-medium">Name</th>
-            <th class="px-4 py-3 text-left font-medium">Email</th>
-            <th class="px-4 py-3 text-left font-medium">Role</th>
-            <th class="px-4 py-3 text-left font-medium">College</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="user in filtered"
-            :key="user.id"
-            class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
-            @click="navigateTo(`/users/${user.id}`)"
-          >
-            <td class="px-4 py-3 font-medium text-gray-900">{{ user.name }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ user.email }}</td>
-            <td class="px-4 py-3"><RoleBadge :role="user.role" /></td>
-            <td class="px-4 py-3 text-gray-500">
-              {{ user.collegeName ?? user.collegeId ?? "—" }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-xs text-gray-500 border-b border-gray-100">
+              <th class="px-4 py-3 text-left font-medium">Name</th>
+              <th class="px-4 py-3 text-left font-medium">Email</th>
+              <th class="px-4 py-3 text-left font-medium">Role</th>
+              <th class="px-4 py-3 text-left font-medium">College</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="user in filtered"
+              :key="user.id"
+              class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
+              @click="navigateTo(`/users/${user.id}`)"
+            >
+              <td class="px-4 py-3 font-medium text-gray-900">{{ user.name }}</td>
+              <td class="px-4 py-3 text-gray-600">{{ user.email }}</td>
+              <td class="px-4 py-3"><RoleBadge :role="user.role" /></td>
+              <td class="px-4 py-3 text-gray-500">
+                {{ user.collegeName ?? user.collegeId ?? "—" }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="px-4 py-3 text-xs text-gray-400 border-t border-gray-100">
         {{ filtered.length }} of {{ users.length }} users
       </div>

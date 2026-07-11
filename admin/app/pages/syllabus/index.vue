@@ -628,7 +628,7 @@ const handleSaveEdit = async (payload: {
 
     <!-- Upload zone -->
     <div
-      class="mb-6 bg-white rounded-xl border-2 border-dashed p-8 text-center transition-colors"
+      class="mb-6 bg-white rounded-xl border-2 border-dashed p-6 sm:p-8 text-center transition-colors"
       :class="isDragOver ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'"
       @dragover.prevent="isDragOver = true"
       @dragleave.prevent="isDragOver = false"
@@ -673,7 +673,7 @@ const handleSaveEdit = async (payload: {
     <div class="mb-4 flex flex-wrap gap-3">
       <select
         v-model="filterCollegeCode"
-        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+        class="flex-1 min-w-[140px] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
       >
         <option value="">All colleges</option>
         <option v-for="c in colleges" :key="c.id" :value="c.code">
@@ -682,7 +682,7 @@ const handleSaveEdit = async (payload: {
       </select>
       <select
         v-model="filterCourseCode"
-        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+        class="flex-1 min-w-[140px] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
       >
         <option value="">All departments</option>
         <option v-for="d in departments" :key="d.code" :value="d.code">
@@ -691,7 +691,7 @@ const handleSaveEdit = async (payload: {
       </select>
       <select
         v-model="filterRegulation"
-        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
+        class="flex-1 min-w-[140px] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none"
       >
         <option value="">All regulations</option>
         <option v-for="r in availableRegulations" :key="r" :value="r">
@@ -728,7 +728,10 @@ const handleSaveEdit = async (payload: {
 
     <!-- Pending table -->
     <div v-if="activeTab === 'pending'">
-      <div v-if="selectedPending.size > 0" class="mb-3 flex items-center gap-2">
+      <div
+        v-if="selectedPending.size > 0"
+        class="mb-3 flex items-center gap-2 flex-wrap"
+      >
         <span class="text-sm text-gray-600"
           >{{ selectedPending.size }} selected</span
         >
@@ -759,53 +762,55 @@ const handleSaveEdit = async (payload: {
         >
           No pending uploads.
         </div>
-        <table v-else class="w-full text-sm">
-          <thead>
-            <tr class="text-left text-gray-400 border-b border-gray-100">
-              <th class="py-2 px-4 font-medium w-8"></th>
-              <th class="py-2 px-4 font-medium">File</th>
-              <th class="py-2 px-4 font-medium">College</th>
-              <th class="py-2 px-4 font-medium">Course</th>
-              <th class="py-2 px-4 font-medium">Regulation</th>
-              <th class="py-2 px-4 font-medium">Subjects</th>
-              <th class="py-2 px-4 font-medium w-20">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in pending"
-              :key="row.id"
-              class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
-              @click="detailItem = row"
-            >
-              <td class="py-2 px-4" @click.stop>
-                <input
-                  type="checkbox"
-                  :checked="selectedPending.has(row.id)"
-                  @change="toggleSelected(row.id)"
-                />
-              </td>
-              <td class="py-2 px-4 text-gray-500">
-                {{ row.fileName ?? "—" }}
-              </td>
-              <td class="py-2 px-4 text-gray-900">{{ row.college }}</td>
-              <td class="py-2 px-4 text-gray-900">{{ row.course }}</td>
-              <td class="py-2 px-4 text-gray-500">{{ row.regulation }}</td>
-              <td class="py-2 px-4 text-gray-500">
-                {{ row.subjects.length }}
-              </td>
-              <td class="py-2 px-4" @click.stop>
-                <button
-                  class="p-1.5 border border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
-                  title="View Details"
-                  @click="detailItem = row"
-                >
-                  <Icon name="i-heroicons-eye" class="w-4 h-4" />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-400 border-b border-gray-100">
+                <th class="py-2 px-4 font-medium w-8"></th>
+                <th class="py-2 px-4 font-medium">File</th>
+                <th class="py-2 px-4 font-medium">College</th>
+                <th class="py-2 px-4 font-medium">Course</th>
+                <th class="py-2 px-4 font-medium">Regulation</th>
+                <th class="py-2 px-4 font-medium">Subjects</th>
+                <th class="py-2 px-4 font-medium w-20">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="row in pending"
+                :key="row.id"
+                class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
+                @click="detailItem = row"
+              >
+                <td class="py-2 px-4" @click.stop>
+                  <input
+                    type="checkbox"
+                    :checked="selectedPending.has(row.id)"
+                    @change="toggleSelected(row.id)"
+                  />
+                </td>
+                <td class="py-2 px-4 text-gray-500">
+                  {{ row.fileName ?? "—" }}
+                </td>
+                <td class="py-2 px-4 text-gray-900">{{ row.college }}</td>
+                <td class="py-2 px-4 text-gray-900">{{ row.course }}</td>
+                <td class="py-2 px-4 text-gray-500">{{ row.regulation }}</td>
+                <td class="py-2 px-4 text-gray-500">
+                  {{ row.subjects.length }}
+                </td>
+                <td class="py-2 px-4" @click.stop>
+                  <button
+                    class="p-1.5 border border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
+                    title="View Details"
+                    @click="detailItem = row"
+                  >
+                    <Icon name="i-heroicons-eye" class="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -821,48 +826,50 @@ const handleSaveEdit = async (payload: {
         >
           No approved curricula yet.
         </div>
-        <table v-else class="w-full text-sm">
-          <thead>
-            <tr class="text-left text-gray-400 border-b border-gray-100">
-              <th class="py-2 px-4 font-medium">College</th>
-              <th class="py-2 px-4 font-medium">Course</th>
-              <th class="py-2 px-4 font-medium">Regulation</th>
-              <th class="py-2 px-4 font-medium">Subjects</th>
-              <th class="py-2 px-4 font-medium w-28">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in approved"
-              :key="row.id"
-              class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
-              @click="detailItem = row"
-            >
-              <td class="py-2 px-4 text-gray-900">{{ row.college }}</td>
-              <td class="py-2 px-4 text-gray-900">{{ row.course }}</td>
-              <td class="py-2 px-4 text-gray-500">{{ row.regulation }}</td>
-              <td class="py-2 px-4 text-gray-500">
-                {{ row.subjects.length }}
-              </td>
-              <td class="py-2 px-4 flex gap-2" @click.stop>
-                <button
-                  class="p-1.5 border border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
-                  title="View Details"
-                  @click="detailItem = row"
-                >
-                  <Icon name="i-heroicons-eye" class="w-4 h-4" />
-                </button>
-                <button
-                  class="p-1.5 border border-yellow-300 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors flex items-center justify-center"
-                  title="Download CSV"
-                  @click="downloadCSV(row)"
-                >
-                  <Icon name="i-heroicons-arrow-down-tray" class="w-4 h-4" />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-400 border-b border-gray-100">
+                <th class="py-2 px-4 font-medium">College</th>
+                <th class="py-2 px-4 font-medium">Course</th>
+                <th class="py-2 px-4 font-medium">Regulation</th>
+                <th class="py-2 px-4 font-medium">Subjects</th>
+                <th class="py-2 px-4 font-medium w-28">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="row in approved"
+                :key="row.id"
+                class="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
+                @click="detailItem = row"
+              >
+                <td class="py-2 px-4 text-gray-900">{{ row.college }}</td>
+                <td class="py-2 px-4 text-gray-900">{{ row.course }}</td>
+                <td class="py-2 px-4 text-gray-500">{{ row.regulation }}</td>
+                <td class="py-2 px-4 text-gray-500">
+                  {{ row.subjects.length }}
+                </td>
+                <td class="py-2 px-4 flex gap-2" @click.stop>
+                  <button
+                    class="p-1.5 border border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-center"
+                    title="View Details"
+                    @click="detailItem = row"
+                  >
+                    <Icon name="i-heroicons-eye" class="w-4 h-4" />
+                  </button>
+                  <button
+                    class="p-1.5 border border-yellow-300 text-yellow-600 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors flex items-center justify-center"
+                    title="Download CSV"
+                    @click="downloadCSV(row)"
+                  >
+                    <Icon name="i-heroicons-arrow-down-tray" class="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -894,14 +901,13 @@ const handleSaveEdit = async (payload: {
     />
 
     <!-- Guide Modal -->
-    <div
+    <Modal
       v-if="showGuideModal"
-      class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
-      @click.self="showGuideModal = false"
+      max-width="max-w-2xl"
+      z-index="z-[60]"
+      @close="showGuideModal = false"
     >
-      <div
-        class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 flex flex-col"
-      >
+      <div class="p-6 flex flex-col">
         <div
           class="flex justify-between items-center pb-3 border-b border-gray-100 mb-4"
         >
@@ -1071,6 +1077,6 @@ const handleSaveEdit = async (payload: {
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   </div>
 </template>

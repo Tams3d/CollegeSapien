@@ -107,7 +107,7 @@ watch([tab, categoryFilter], fetchResources);
       {{ statsError }}
     </div>
     <template v-else-if="stats">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard
           label="Approved Notes"
           :value="stats.approvedNotes"
@@ -158,7 +158,7 @@ watch([tab, categoryFilter], fetchResources);
         </button>
       </div>
 
-      <div class="flex flex-row gap-4">
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
         <div
           class="flex rounded-lg bg-gray-100 p-1 gap-1 overflow-hidden text-sm"
         >

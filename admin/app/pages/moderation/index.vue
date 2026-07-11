@@ -102,7 +102,7 @@ const archive = async (id: string) => {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between gap-3 flex-wrap mb-6">
       <h1 class="text-xl font-bold text-gray-900">Moderation Queue</h1>
       <select
         v-model="categoryFilter"
@@ -245,11 +245,8 @@ const archive = async (id: string) => {
     </div>
 
     <!-- Reject modal -->
-    <div
-      v-if="pendingReject"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-    >
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+    <Modal v-if="pendingReject" @close="pendingReject = null">
+      <div class="p-6">
         <h3 class="text-base font-semibold text-gray-900 mb-2">
           Reject resource
         </h3>
@@ -275,6 +272,6 @@ const archive = async (id: string) => {
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   </div>
 </template>
