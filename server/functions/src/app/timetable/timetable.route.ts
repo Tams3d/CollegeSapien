@@ -47,7 +47,7 @@ const router = Router();
  *                         properties:
  *                           day:
  *                             type: string
- *                             enum: [MON, TUE, WED, THU, FRI, SAT]
+ *                             enum: [MON, TUE, WED, THU, FRI, SAT, SUN]
  *                             example: "MON"
  *                           startTime:
  *                             type: string

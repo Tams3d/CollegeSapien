@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/syllabus_models.dart';
 import '../models/timetable_models.dart';
 import '../providers/app_state_notifier.dart';
 import '../services/timetable_service.dart';
@@ -6,6 +7,8 @@ import '../utils/breakpoints.dart';
 import '../utils/app_spacing.dart';
 import '../widgets/hoverable.dart';
 import '../widgets/responsive_layout.dart';
+import '../widgets/searchable_dropdown.dart';
+import 'syllabus/syllabus_selection_screen.dart';
 import 'timetable_detail_screen.dart';
 
 class TimetableListScreen extends StatefulWidget {
@@ -52,10 +55,56 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
     }
   }
 
+  int _slotMinutes(String hhmm) {
+    final parts = hhmm.split(':');
+    final h = int.tryParse(parts.isNotEmpty ? parts[0] : '') ?? 0;
+    final m = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 0;
+    return h * 60 + m;
+  }
+
+  bool _slotsOverlap(Map<String, String> a, Map<String, String> b) {
+    if (a['day'] != b['day']) return false;
+    final aStart = _slotMinutes(a['startTime'] ?? '00:00');
+    final aEnd = _slotMinutes(a['endTime'] ?? '00:00');
+    final bStart = _slotMinutes(b['startTime'] ?? '00:00');
+    final bEnd = _slotMinutes(b['endTime'] ?? '00:00');
+    return aStart < bEnd && bStart < aEnd;
+  }
+
+  // Checks the slots about to be saved against every class already on any
+  // other subject (same-day, overlapping time) and against each other, so a
+  // student can't double-book a period. Returns a user-facing message for
+  // the first conflict found, or null if there are none.
+  String? _findSlotConflict(
+    List<Map<String, String>> newSlots,
+    Iterable<TimetableSubject> otherSubjects,
+  ) {
+    for (var i = 0; i < newSlots.length; i++) {
+      final slot = newSlots[i];
+      for (final other in otherSubjects) {
+        for (final c in other.classes) {
+          final existingSlot = {
+            'day': c.day,
+            'startTime': c.startTime,
+            'endTime': c.endTime,
+          };
+          if (_slotsOverlap(slot, existingSlot)) {
+            return '${slot['day']} ${slot['startTime']}–${slot['endTime']} '
+                'overlaps ${other.name}\'s ${c.startTime}–${c.endTime} slot.';
+          }
+        }
+      }
+      for (var j = i + 1; j < newSlots.length; j++) {
+        if (_slotsOverlap(slot, newSlots[j])) {
+          return 'You have two overlapping slots on ${slot['day']}.';
+        }
+      }
+    }
+    return null;
+  }
+
   Future<void> _showSubjectSheet({TimetableSubject? subject}) async {
     final isEditing = subject != null;
-    final nameController = TextEditingController(text: subject?.name ?? '');
-    final codeController = TextEditingController(text: subject?.code ?? '');
 
     final List<Map<String, String>> slots = subject?.classes
             .map((c) => {
@@ -72,115 +121,311 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
     final types = ['CORE', 'LAB', 'BREAK'];
     bool isSaving = false;
 
+    // When editing a subject whose code isn't in the user's saved syllabus
+    // subjects (e.g. a legacy free-text entry), keep it selectable by
+    // synthesizing an entry rather than forcing a re-pick.
+    SavedSubject? selectedSubject;
+    if (isEditing) {
+      final saved = AppStateNotifier.instance.savedSubjects ?? [];
+      final match = saved.where((s) => s.subjectCode == subject.code);
+      selectedSubject = match.isNotEmpty
+          ? match.first
+          : SavedSubject(subjectCode: subject.code, subjectName: subject.name);
+    }
+
     Widget buildSheetContent(BuildContext ctx) {
       return StatefulBuilder(
           builder: (ctx, setSheetState) {
+            final rawSavedSubjects = AppStateNotifier.instance.savedSubjects ?? [];
+            final hasAssignedSubjects = rawSavedSubjects.isNotEmpty &&
+                !AppStateNotifier.instance.savedSubjectsFromCurriculum;
+            final availableSubjects = <SavedSubject>[
+              if (selectedSubject != null &&
+                  !rawSavedSubjects
+                      .any((s) => s.subjectCode == selectedSubject!.subjectCode))
+                selectedSubject!,
+              if (hasAssignedSubjects) ...rawSavedSubjects,
+            ];
+            final showSubjectCta = !hasAssignedSubjects && selectedSubject == null;
+
+            // Recomputed on every rebuild (i.e. whenever a slot is added or
+            // removed via setSheetState below), so the error clears itself
+            // the moment the offending slot is deleted — no separate state
+            // to keep in sync, and no network call since _subjects is
+            // already loaded locally.
+            final otherSubjects =
+                _subjects.where((s) => !isEditing || s.id != subject.id);
+            final conflictError = _findSlotConflict(slots, otherSubjects);
+
+            String formatHour(double h) {
+              final totalMinutes = (h * 60).round();
+              final hh = totalMinutes ~/ 60;
+              final mm = totalMinutes % 60;
+              return '${hh.toString().padLeft(2, '0')}:${mm.toString().padLeft(2, '0')}';
+            }
+
             Future<void> addSlot() async {
-              String selectedDay = days.first;
+              final selectedDays = <String>{'MON'};
+              double startHour = 9;
+              double endHour = 10;
               String selectedType = types.first;
-              final startController = TextEditingController(text: '09:00');
-              final endController = TextEditingController(text: '10:00');
               final roomController = TextEditingController();
 
               final confirmed = await showDialog<bool>(
                 context: ctx,
-                builder: (dlgCtx) => AlertDialog(
-                  backgroundColor: const Color(0xFFFFF8E4),
-                  title: const Text(
-                    'Add Class Slot',
-                    style: TextStyle(fontFamily: 'Lexend Mega', fontSize: 16),
-                  ),
-                  content: StatefulBuilder(
-                    builder: (dlgCtx, setDlgState) => SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          DropdownButtonFormField<String>(
-                            initialValue: selectedDay,
-                            decoration: const InputDecoration(labelText: 'Day'),
-                            items: days
-                                .map((d) =>
-                                    DropdownMenuItem(value: d, child: Text(d)))
-                                .toList(),
-                            onChanged: (v) =>
-                                setDlgState(() => selectedDay = v!),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: startController,
-                            decoration: const InputDecoration(
-                                labelText: 'Start Time (HH:MM)'),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: endController,
-                            decoration: const InputDecoration(
-                                labelText: 'End Time (HH:MM)'),
-                          ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: roomController,
-                            decoration: const InputDecoration(
-                                labelText: 'Room (optional)'),
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            initialValue: selectedType,
-                            decoration:
-                                const InputDecoration(labelText: 'Type'),
-                            items: types
-                                .map((t) =>
-                                    DropdownMenuItem(value: t, child: Text(t)))
-                                .toList(),
-                            onChanged: (v) =>
-                                setDlgState(() => selectedType = v!),
-                          ),
-                        ],
+                builder: (dlgCtx) => StatefulBuilder(
+                  builder: (dlgCtx, setDlgState) {
+                    final dayOrder = days.where(selectedDays.contains).toList();
+                    final previewText = dayOrder.isEmpty
+                        ? 'Select at least one day'
+                        : '${dayOrder.join(', ')} · ${formatHour(startHour)}–${formatHour(endHour)}';
+
+                    return AlertDialog(
+                      backgroundColor: const Color(0xFFFFF8E4),
+                      title: const Text(
+                        'Add Class Slot',
+                        style:
+                            TextStyle(fontFamily: 'Lexend Mega', fontSize: 16),
                       ),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(dlgCtx, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(dlgCtx, true),
-                      child: const Text('Add'),
-                    ),
-                  ],
+                      content: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Days',
+                              style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: days.map((d) {
+                                final isOn = selectedDays.contains(d);
+                                return Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => setDlgState(() {
+                                      if (isOn) {
+                                        selectedDays.remove(d);
+                                      } else {
+                                        selectedDays.add(d);
+                                      }
+                                    }),
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 10),
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: isOn
+                                            ? Colors.black
+                                            : Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: Colors.black, width: 1.5),
+                                      ),
+                                      child: Text(
+                                        d.substring(0, 1),
+                                        style: TextStyle(
+                                          fontFamily: 'Public Sans',
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13,
+                                          color: isOn
+                                              ? Colors.white
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Time',
+                              style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            Row(
+                              children: [
+                                const Text('Start  ',
+                                    style: TextStyle(
+                                        fontFamily: 'Public Sans',
+                                        fontSize: 12)),
+                                Text(
+                                  formatHour(startHour),
+                                  style: const TextStyle(
+                                      fontFamily: 'Public Sans',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                            Slider(
+                              value: startHour,
+                              min: 6,
+                              max: 22,
+                              divisions: 64,
+                              label: formatHour(startHour),
+                              onChanged: (v) => setDlgState(() {
+                                startHour = v;
+                                if (endHour < startHour + 0.25) {
+                                  endHour = (startHour + 0.25).clamp(6, 22);
+                                }
+                              }),
+                            ),
+                            Row(
+                              children: [
+                                const Text('End  ',
+                                    style: TextStyle(
+                                        fontFamily: 'Public Sans',
+                                        fontSize: 12)),
+                                Text(
+                                  formatHour(endHour),
+                                  style: const TextStyle(
+                                      fontFamily: 'Public Sans',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                            Slider(
+                              value: endHour,
+                              min: 6,
+                              max: 22,
+                              divisions: 64,
+                              label: formatHour(endHour),
+                              onChanged: (v) => setDlgState(() {
+                                endHour = v;
+                                if (startHour > endHour - 0.25) {
+                                  startHour = (endHour - 0.25).clamp(6, 22);
+                                }
+                              }),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Type',
+                              style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: types.map((t) {
+                                final isOn = selectedType == t;
+                                return Expanded(
+                                  child: GestureDetector(
+                                    onTap: () =>
+                                        setDlgState(() => selectedType = t),
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: isOn
+                                            ? Colors.black
+                                            : Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: Colors.black, width: 1.5),
+                                      ),
+                                      child: Text(
+                                        t,
+                                        style: TextStyle(
+                                          fontFamily: 'Public Sans',
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11,
+                                          color: isOn
+                                              ? Colors.white
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: roomController,
+                              decoration: const InputDecoration(
+                                  labelText: 'Room (optional)'),
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'Adding: $previewText',
+                                style: const TextStyle(
+                                    fontFamily: 'Public Sans', fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dlgCtx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: selectedDays.isEmpty
+                              ? null
+                              : () => Navigator.pop(dlgCtx, true),
+                          child: const Text('Add'),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               );
 
               if (confirmed == true) {
                 setSheetState(() {
-                  slots.add({
-                    'day': selectedDay,
-                    'startTime': startController.text.trim(),
-                    'endTime': endController.text.trim(),
-                    'room': roomController.text.trim(),
-                    'type': selectedType,
-                  });
+                  for (final day in days.where(selectedDays.contains)) {
+                    slots.add({
+                      'day': day,
+                      'startTime': formatHour(startHour),
+                      'endTime': formatHour(endHour),
+                      'room': roomController.text.trim(),
+                      'type': selectedType,
+                    });
+                  }
                 });
               }
             }
 
             Future<void> saveSubject() async {
-              final name = nameController.text.trim();
-              final code = codeController.text.trim();
-              if (name.isEmpty || code.isEmpty) {
+              if (selectedSubject == null) {
                 if (ctx.mounted) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                        content: Text('Subject name and code are required.')),
+                    const SnackBar(content: Text('Select a subject first.')),
                   );
                 }
                 return;
               }
+              final name = selectedSubject!.subjectName;
+              final code = selectedSubject!.subjectCode;
 
               setSheetState(() => isSaving = true);
 
               try {
+                final existing = await _timetableService.getAllSubjects();
+
                 final classes = slots.map((s) {
                   final start = s['startTime'] ?? '09:00';
                   return TimetableClass(
@@ -205,7 +450,6 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                   classes: classes,
                 );
 
-                final existing = await _timetableService.getAllSubjects();
                 final List<TimetableSubject> merged;
                 if (isEditing) {
                   merged = existing
@@ -260,21 +504,67 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Subject Name',
-                        border: OutlineInputBorder(),
+                    if (showSubjectCta)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFE8B0),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black, width: 1.5),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'No subjects assigned yet',
+                              style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Confirm your actual subjects for this semester before building a timetable.',
+                              style: TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 12,
+                                  color: Colors.black87),
+                            ),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  await Navigator.push(
+                                    ctx,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const SyllabusSelectionScreen(),
+                                    ),
+                                  );
+                                  setSheetState(() {});
+                                },
+                                icon: const Icon(Icons.checklist),
+                                label: const Text('Configure subjects'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      SearchableDropdown<SavedSubject>(
+                        items: availableSubjects,
+                        value: selectedSubject,
+                        labelBuilder: (s) =>
+                            '${s.subjectCode} — ${s.subjectName}',
+                        decoration: const InputDecoration(
+                          labelText: 'Subject',
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (s) =>
+                            setSheetState(() => selectedSubject = s),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: codeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Subject Code',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -303,32 +593,85 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                         ),
                       )
                     else
-                      ...slots.asMap().entries.map((entry) {
-                        final i = entry.key;
-                        final s = entry.value;
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            '${s['day']} ${s['startTime']}–${s['endTime']}',
-                            style: const TextStyle(
-                                fontFamily: 'Public Sans',
-                                fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            '${s['type']}${s['room']!.isNotEmpty ? ' · ${s['room']}' : ''}',
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () =>
-                                setSheetState(() => slots.removeAt(i)),
-                          ),
-                        );
-                      }),
+                      ...(() {
+                        // Slots sharing the same time/room/type (added
+                        // together across multiple days) collapse into one
+                        // row, e.g. "MON/WED/FRI 09:00-10:00", instead of a
+                        // separate row per day.
+                        final grouped = <String, List<int>>{};
+                        for (var i = 0; i < slots.length; i++) {
+                          final s = slots[i];
+                          final key =
+                              '${s['startTime']}|${s['endTime']}|${s['room']}|${s['type']}';
+                          grouped.putIfAbsent(key, () => []).add(i);
+                        }
+                        return grouped.values.map((indices) {
+                          final first = slots[indices.first];
+                          final dayLabels = indices
+                              .map((i) => slots[i]['day']!)
+                              .toList()
+                            ..sort((a, b) =>
+                                days.indexOf(a).compareTo(days.indexOf(b)));
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              '${dayLabels.join('/')} ${first['startTime']}–${first['endTime']}',
+                              style: const TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              '${first['type']}${first['room']!.isNotEmpty ? ' · ${first['room']}' : ''}',
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => setSheetState(() {
+                                for (final i in indices.toList()
+                                  ..sort((a, b) => b.compareTo(a))) {
+                                  slots.removeAt(i);
+                                }
+                              }),
+                            ),
+                          );
+                        });
+                      })(),
+                    if (conflictError != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFD9D9),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red, width: 1),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.error_outline,
+                                color: Colors.red, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                conflictError,
+                                style: const TextStyle(
+                                  fontFamily: 'Public Sans',
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: isSaving ? null : saveSubject,
+                        onPressed: (isSaving || conflictError != null)
+                            ? null
+                            : saveSubject,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFFD966),
                           foregroundColor: Colors.black,
