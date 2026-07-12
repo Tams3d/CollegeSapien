@@ -5,8 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/api_models.dart';
 // import '../../services/api_service.dart'; // mod: mod endpoints removed
+import '../../providers/resources_cache_store.dart';
 import '../../services/app_capability_service.dart';
-import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
@@ -45,12 +45,17 @@ class _QpHubScreenState extends State<QpHubScreen> {
   @override
   void initState() {
     super.initState();
-    final cached = CacheService.instance.get<List<HubResource>>('qp_hub');
-    _future = cached != null
-        ? Future.value(cached)
-        : _resourceService.listHubResources('QP');
+    _future = _initialLoad();
     _loadMeta();
     _fetchFresh();
+  }
+
+  Future<List<HubResource>> _initialLoad() async {
+    final box = ResourcesCacheStore.instance.qpBox;
+    if (!box.hasValue) await box.hydrate();
+    final cached = box.valueOrNull;
+    if (cached != null) return cached;
+    return _resourceService.listHubResources('QP');
   }
 
   Future<void> _fetchFresh() async {
@@ -60,7 +65,7 @@ class _QpHubScreenState extends State<QpHubScreen> {
         department: _selectedDepartment,
         regulation: _selectedRegulation,
       );
-      CacheService.instance.set('qp_hub', fresh);
+      ResourcesCacheStore.instance.qpBox.set(fresh);
       if (mounted) {
         setState(() {
           _future = Future.value(fresh);
@@ -108,7 +113,7 @@ class _QpHubScreenState extends State<QpHubScreen> {
   }
 
   void _refresh() {
-    CacheService.instance.invalidate('qp_hub');
+    ResourcesCacheStore.instance.qpBox.invalidate();
     setState(() {
       _future = _resourceService.listHubResources(
         'QP',
@@ -117,7 +122,7 @@ class _QpHubScreenState extends State<QpHubScreen> {
       );
     });
     _future
-        .then((fresh) => CacheService.instance.set('qp_hub', fresh))
+        .then((fresh) => ResourcesCacheStore.instance.qpBox.set(fresh))
         .ignore();
     _loadMeta();
   }

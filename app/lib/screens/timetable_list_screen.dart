@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/timetable_models.dart';
-import '../services/cache_service.dart';
+import '../providers/app_state_notifier.dart';
 import '../services/timetable_service.dart';
 import '../utils/breakpoints.dart';
 import '../utils/app_spacing.dart';
@@ -26,8 +26,7 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
   @override
   void initState() {
     super.initState();
-    final cached =
-        CacheService.instance.get<List<TimetableSubject>>('timetable_subjects');
+    final cached = AppStateNotifier.instance.timetableSubjects;
     if (cached != null) {
       _subjects = cached;
       _isLoading = false;
@@ -39,7 +38,6 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
     if (_subjects.isEmpty) setState(() => _isLoading = true);
     try {
       final subjects = await _timetableService.getAllSubjects();
-      CacheService.instance.set('timetable_subjects', subjects);
       setState(() {
         _subjects = subjects;
         _isLoading = false;
@@ -217,7 +215,6 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
                   merged = [...existing, newSubject];
                 }
                 await _timetableService.saveSubjects(merged);
-                CacheService.instance.set('timetable_subjects', merged);
 
                 if (ctx.mounted) Navigator.pop(ctx);
                 if (mounted) setState(() => _subjects = merged);
@@ -430,7 +427,6 @@ class _TimetableListScreenState extends State<TimetableListScreen> {
       final existing = await _timetableService.getAllSubjects();
       final updated = existing.where((s) => s.id != subject.id).toList();
       await _timetableService.saveSubjects(updated);
-      CacheService.instance.set('timetable_subjects', updated);
       setState(() => _subjects = updated);
 
       if (mounted) {

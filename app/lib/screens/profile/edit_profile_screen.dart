@@ -77,8 +77,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     // Prefill instantly from the cache /auth/sync already populated (splash,
     // home screen, ...) instead of blocking this screen on a fresh sync.
     _applyProfile(
-      Provider.of<AppStateNotifier>(context, listen: false).userProfile ??
-          AuthService.instance.profile,
+      Provider.of<AppStateNotifier>(context, listen: false).userProfileStale,
       markAsInitial: true,
     );
     _loadProfile();

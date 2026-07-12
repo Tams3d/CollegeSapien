@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/api_models.dart';
+import '../providers/app_state_notifier.dart';
 import 'api_service.dart';
 // import 'app_capability_service.dart'; // mod: moved to web admin panel
 
@@ -20,17 +21,12 @@ class AuthService {
 
   User? get currentUser => _auth.currentUser;
 
-  UserProfile? _profile;
-  UserProfile? get profile => _profile;
-
   Future<AuthSyncResult> syncProfile() async {
     final timezoneOffsetMinutes = DateTime.now().timeZoneOffset.inMinutes;
     final json = await ApiService.instance
             .post('/auth/sync?timezoneOffsetMinutes=$timezoneOffsetMinutes')
         as Map<String, dynamic>;
-    final result = AuthSyncResult.fromJson(json);
-    _profile = result.user;
-    return result;
+    return AuthSyncResult.fromJson(json);
   }
 
   Future<AuthSyncResult> signInWithEmailPassword(
@@ -106,6 +102,7 @@ class AuthService {
   Future<void> deleteAccount() async {
     await ApiService.instance.delete('/auth/me');
     await _auth.signOut();
+    AppStateNotifier.instance.invalidateAll();
   }
 
   Future<UserProfile> onboard({
@@ -125,7 +122,6 @@ class AuthService {
   }
 
   Future<void> signOut() async {
-    _profile = null;
     // AppCapabilityService.instance.invalidate(); // mod: moved to web admin panel
     try {
       await ApiService.instance
@@ -138,5 +134,9 @@ class AuthService {
       await _googleSignIn.signOut().timeout(const Duration(seconds: 2));
     } catch (_) {}
     await _auth.signOut();
+    // Must clear the cached profile/attendance/timetable/etc. here — a
+    // second account signing in on the same device would otherwise inherit
+    // this account's stale cached data until each field's TTL expires.
+    AppStateNotifier.instance.invalidateAll();
   }
 }

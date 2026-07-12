@@ -5,8 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/api_models.dart';
 // import '../../services/api_service.dart'; // mod: mod endpoints removed
+import '../../providers/resources_cache_store.dart';
 import '../../services/app_capability_service.dart';
-import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
@@ -43,18 +43,23 @@ class _NotesHubScreenState extends State<NotesHubScreen> {
   @override
   void initState() {
     super.initState();
-    final cached = CacheService.instance.get<List<HubResource>>('notes_hub');
-    _future = cached != null
-        ? Future.value(cached)
-        : _resourceService.listHubResources('Notes');
+    _future = _initialLoad();
     _loadMeta();
     _fetchFresh();
+  }
+
+  Future<List<HubResource>> _initialLoad() async {
+    final box = ResourcesCacheStore.instance.notesBox;
+    if (!box.hasValue) await box.hydrate();
+    final cached = box.valueOrNull;
+    if (cached != null) return cached;
+    return _resourceService.listHubResources('Notes');
   }
 
   Future<void> _fetchFresh() async {
     try {
       final fresh = await _resourceService.listHubResources('Notes');
-      CacheService.instance.set('notes_hub', fresh);
+      ResourcesCacheStore.instance.notesBox.set(fresh);
       if (mounted) {
         setState(() {
           _future = Future.value(fresh);
@@ -102,12 +107,12 @@ class _NotesHubScreenState extends State<NotesHubScreen> {
   }
 
   void _refresh() {
-    CacheService.instance.invalidate('notes_hub');
+    ResourcesCacheStore.instance.notesBox.invalidate();
     setState(() {
       _future = _resourceService.listHubResources('Notes');
     });
     _future
-        .then((fresh) => CacheService.instance.set('notes_hub', fresh))
+        .then((fresh) => ResourcesCacheStore.instance.notesBox.set(fresh))
         .ignore();
     _loadMeta();
   }

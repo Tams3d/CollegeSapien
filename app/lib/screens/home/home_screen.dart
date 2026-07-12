@@ -250,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadProfile() async {
     final appState = Provider.of<AppStateNotifier>(context, listen: false);
-    var user = appState.userProfile ?? AuthService.instance.profile;
+    var user = appState.userProfileStale;
 
     if (user != null) {
       if (mounted) {

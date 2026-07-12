@@ -60,6 +60,9 @@ class _MainNavigationState extends State<MainNavigation>
     try {
       await AttendanceNotificationService.instance.syncPendingActions();
       AttendanceNotificationService.instance.openPendingNavigation();
+      // Cache-aside via AppStateNotifier.timetableBox — if splash's
+      // /auth/sync already populated it within TTL, this reuses that value
+      // instead of firing a second /timetable request.
       final subjects = await TimetableService().getAllSubjects();
       await AttendanceNotificationService.instance
           .scheduleForTimetable(subjects);

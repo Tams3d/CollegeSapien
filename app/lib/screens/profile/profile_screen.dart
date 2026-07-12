@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../models/cgpa_models.dart';
 import '../../services/auth_service.dart';
-import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
 import '../../providers/app_state_notifier.dart';
 import '../../utils/app_colors.dart';
@@ -30,9 +30,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const _cgpaCacheKey = 'profile_cgpa_stat';
   static const _semesterPrefsKey = 'last_semester';
-  static const _filesUploadedCacheKey = 'profile_files_uploaded_stat';
 
   String _attendanceStat = '--';
   String _cgpaStat = '--';
@@ -79,29 +77,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _totalCredits = credits > 0 ? credits : null;
     }
 
-    // CGPA/Files uploaded aren't part of /auth/sync — keep their own cache.
-    final cachedCgpa = CacheService.instance.get<String>(_cgpaCacheKey);
-    if (cachedCgpa != null) _cgpaStat = cachedCgpa;
-    final cachedFilesUploaded =
-        CacheService.instance.get<String>(_filesUploadedCacheKey);
+    // CGPA/files-uploaded aren't part of /auth/sync — CGPA is derived from
+    // its own source-of-truth box (shared with the CGPA calculator screen),
+    // files-uploaded is cached as its own short-TTL stat.
+    if (!appState.cgpaSemestersBox.hasValue) {
+      await appState.cgpaSemestersBox.hydrate();
+    }
+    _applyCgpaStat(appState.cgpaSemestersBox.staleValueOrNull);
+    if (!appState.filesUploadedStatBox.hasValue) {
+      await appState.filesUploadedStatBox.hydrate();
+    }
+    final cachedFilesUploaded = appState.filesUploadedStatBox.staleValueOrNull;
     if (cachedFilesUploaded != null) _filesUploaded = cachedFilesUploaded;
 
     if (mounted) setState(() {});
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cgpa = prefs.getString('last_cgpa');
-      if (cgpa != null) {
-        CacheService.instance.set(_cgpaCacheKey, cgpa);
-        if (mounted) setState(() => _cgpaStat = cgpa);
-      }
-
-      final filesUploaded = prefs.getString('last_files_uploaded');
-      if (filesUploaded != null) {
-        CacheService.instance.set(_filesUploadedCacheKey, filesUploaded);
-        if (mounted) setState(() => _filesUploaded = filesUploaded);
-      }
-    } catch (_) {}
 
     // Background refresh — only hit the network for pieces whose cache is
     // stale/missing, so reopening this screen doesn't always re-sync.
@@ -170,11 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .where((r) => r.uploadedBy == uid)
             .length;
         final countStr = count.toString();
-        CacheService.instance.set(_filesUploadedCacheKey, countStr);
-        try {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('last_files_uploaded', countStr);
-        } catch (_) {}
+        appState.filesUploadedStatBox.set(countStr);
         if (mounted) setState(() => _filesUploaded = countStr);
       }
     } catch (_) {}
@@ -187,6 +172,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     //     setState(() => _showAdminManagement = capabilities.canModerateResources);
     //   }
     // } catch (_) {}
+  }
+
+  void _applyCgpaStat(List<CgpaSemesterEntry>? entries) {
+    if (entries == null || entries.isEmpty) return;
+    final totalCredits = entries.fold<int>(0, (sum, e) => sum + e.credits);
+    if (totalCredits == 0) return;
+    final cgpa =
+        entries.fold<double>(0, (sum, e) => sum + e.gpa * e.credits) /
+            totalCredits;
+    _cgpaStat = cgpa.toStringAsFixed(2);
   }
 
   @override
