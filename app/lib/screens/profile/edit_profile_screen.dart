@@ -12,6 +12,7 @@ import '../../providers/app_state_notifier.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/department_constants.dart';
+import '../../widgets/responsive_layout.dart';
 import '../../widgets/searchable_dropdown.dart';
 import '../../widgets/subjects_editor.dart';
 
@@ -431,7 +432,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
-          child: Form(
+          child: MaxWidthContent(
+            maxWidth: 600,
+            child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,6 +579,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

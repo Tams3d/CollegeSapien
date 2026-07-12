@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../models/timetable_models.dart';
 import '../../services/attendance_service.dart';
 import '../../services/timetable_service.dart';
+import '../../widgets/responsive_layout.dart';
 
 class MarkAttendanceScreen extends StatefulWidget {
   final String? preselectedDateKey;
@@ -260,7 +261,9 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(screenWidth * 0.045),
-          child: Column(
+          child: MaxWidthContent(
+            maxWidth: 640,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
@@ -477,6 +480,7 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),

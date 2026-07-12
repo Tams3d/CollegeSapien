@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/app_colors.dart';
+import '../../widgets/responsive_layout.dart';
 
 class SeasonalContentScreen extends StatelessWidget {
   const SeasonalContentScreen({super.key});
@@ -79,7 +80,9 @@ class SeasonalContentScreen extends StatelessWidget {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(screenWidth * 0.045),
-          child: Column(
+          child: MaxWidthContent(
+            maxWidth: 700,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
@@ -162,6 +165,7 @@ class SeasonalContentScreen extends StatelessWidget {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),

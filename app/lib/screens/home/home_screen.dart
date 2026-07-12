@@ -20,6 +20,8 @@ import '../../models/syllabus_models.dart';
 import '../../services/syllabus_service.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/app_spacing.dart';
+import '../../widgets/responsive_layout.dart';
 import '../attendance/mark_attendance_screen.dart';
 import '../syllabus/syllabus_selection_screen.dart';
 import '../timetable_list_screen.dart';
@@ -83,8 +85,13 @@ String _fmt(String t) {
 
 class HomeScreen extends StatefulWidget {
   final Function(int)? onTabSwitch;
+  final bool showProfileButton;
 
-  const HomeScreen({super.key, this.onTabSwitch});
+  const HomeScreen({
+    super.key,
+    this.onTabSwitch,
+    this.showProfileButton = true,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -558,138 +565,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _header(),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: _attendanceCard(),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _isDayOver ? _dayOverCard() : _nextClassCard(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _sectionHeader("Today's Timetable", onShowAll: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const TimetableListScreen()));
-              }),
-              const SizedBox(height: 12),
-              _timetableCarousel(),
-              if (_savedSubjects.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                _sectionHeader(
-                  "${_semester == 1 ? '1st' : _semester == 2 ? '2nd' : _semester == 3 ? '3rd' : '${_semester}th'} Semester Subjects",
-                  onShowAll: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const SyllabusSelectionScreen()),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (_showingCurriculumFallback)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const SyllabusSelectionScreen()),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.accentBlue.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: Colors.black.withValues(alpha: 0.2)),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.info_outline, size: 16),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'These are default subjects for your semester. Tap to update with your electives.',
-                                style: TextStyle(
-                                  fontFamily: 'Public Sans',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                _syllabusCarousel(),
-              ] else if (_subjectsResolved && _semester > 0) ...[
-                const SizedBox(height: 24),
-                _sectionHeader(
-                  "${_semester == 1 ? '1st' : _semester == 2 ? '2nd' : _semester == 3 ? '3rd' : '${_semester}th'} Semester Subjects",
-                ),
-                const SizedBox(height: 12),
-                _configureSubjectsCard(),
-              ],
-              const SizedBox(height: 24),
-              _sectionHeader(
-                "Events Near You",
-                trailing: GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CreateEventScreen(),
-                    ),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryYellow,
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: const [
-                        BoxShadow(offset: Offset(2, 2), color: Colors.black)
-                      ],
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.add, size: 10, color: Colors.black),
-                        SizedBox(width: 2),
-                        Text(
-                          'SUGGEST',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.11,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                onShowAll: _hasMoreEvents
-                    ? () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => EventsAllScreen(events: _allEvents),
-                          ),
-                        )
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              _eventsSection(),
               if (_semester >= 4) ...[
                 const SizedBox(height: 24),
                 _sectionHeader('AI Features'),
@@ -699,9 +574,236 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 80),
             ],
           ),
+=======
+        child: ResponsiveLayout(
+          mobile: (_) => _mobileBody(context),
+          desktop: (_) => _desktopBody(context),
+>>>>>>> origin/main
         ),
       ),
     );
+  }
+
+  // ─── Mobile layout (unchanged single-column feed) ─────────────────────────
+
+  Widget _mobileBody(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _header(),
+          const SizedBox(height: 24),
+          _statCardsRow(),
+          const SizedBox(height: 24),
+          ..._timetableSection(context),
+          ..._subjectsSection(context),
+          const SizedBox(height: 24),
+          ..._eventsSectionWithHeader(context),
+          ..._aiFeaturesSection(),
+          const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+
+  // ─── Desktop layout: 2-column dashboard grid ──────────────────────────────
+  //
+  // Left column carries the "browse" content (timetable/subjects carousels,
+  // AI features); right column carries "at a glance" stats (attendance,
+  // next-class, events feed) — turning the mobile single feed into an
+  // actual dashboard instead of a stretched single column.
+
+  Widget _desktopBody(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(AppSpacing.pagePadding(width)),
+      child: MaxWidthContent(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _header(),
+            SizedBox(height: AppSpacing.sectionGap(width)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 65,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ..._timetableSection(context),
+                      ..._subjectsSection(context),
+                      ..._aiFeaturesSection(),
+                    ],
+                  ),
+                ),
+                SizedBox(width: AppSpacing.lg),
+                Expanded(
+                  flex: 35,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _statCardsRow(),
+                      SizedBox(height: AppSpacing.sectionGap(width)),
+                      ..._eventsSectionWithHeader(context),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Shared section builders (used by both mobile and desktop layouts) ────
+
+  Widget _statCardsRow() {
+    return Row(
+      children: [
+        Expanded(child: _attendanceCard()),
+        const SizedBox(width: 16),
+        Expanded(child: _isDayOver ? _dayOverCard() : _nextClassCard()),
+      ],
+    );
+  }
+
+  List<Widget> _timetableSection(BuildContext context) {
+    return [
+      _sectionHeader("Today's Timetable", onShowAll: () {
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const TimetableListScreen()));
+      }),
+      const SizedBox(height: 12),
+      _timetableCarousel(),
+    ];
+  }
+
+  List<Widget> _subjectsSection(BuildContext context) {
+    if (_savedSubjects.isNotEmpty) {
+      return [
+        const SizedBox(height: 24),
+        _sectionHeader(
+          "${_semester == 1 ? '1st' : _semester == 2 ? '2nd' : _semester == 3 ? '3rd' : '${_semester}th'} Semester Subjects",
+          onShowAll: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const SyllabusSelectionScreen())),
+        ),
+        const SizedBox(height: 12),
+        if (_showingCurriculumFallback)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const SyllabusSelectionScreen()),
+              ),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.accentBlue.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border:
+                      Border.all(color: Colors.black.withValues(alpha: 0.2)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'These are default subjects for your semester. Tap to update with your electives.',
+                        style: TextStyle(
+                          fontFamily: 'Public Sans',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        _syllabusCarousel(),
+      ];
+    } else if (_subjectsResolved && _semester > 0) {
+      return [
+        const SizedBox(height: 24),
+        _sectionHeader(
+          "${_semester == 1 ? '1st' : _semester == 2 ? '2nd' : _semester == 3 ? '3rd' : '${_semester}th'} Semester Subjects",
+        ),
+        const SizedBox(height: 12),
+        _configureSubjectsCard(),
+      ];
+    }
+    return const [];
+  }
+
+  List<Widget> _eventsSectionWithHeader(BuildContext context) {
+    return [
+      _sectionHeader(
+        "Events Near You",
+        trailing: GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CreateEventScreen(),
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.primaryYellow,
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: const [
+                BoxShadow(offset: Offset(2, 2), color: Colors.black)
+              ],
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.add, size: 10, color: Colors.black),
+                SizedBox(width: 2),
+                Text(
+                  'SUGGEST',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.11,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        onShowAll: _hasMoreEvents
+            ? () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EventsAllScreen(events: _allEvents),
+                  ),
+                )
+            : null,
+      ),
+      const SizedBox(height: 12),
+      _eventsSection(),
+    ];
+  }
+
+  List<Widget> _aiFeaturesSection() {
+    if (_semester < 4) return const [];
+    return [
+      const SizedBox(height: 24),
+      _sectionHeader('AI Features'),
+      const SizedBox(height: 12),
+      _resumeRoastCard(),
+    ];
   }
 
   // ─── Header ────────────────────────────────────────────────────────────────
@@ -726,25 +828,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              ),
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.accentBlue,
-                  border: Border.all(color: Colors.black),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(offset: Offset(1, 1), color: Colors.black)
-                  ],
+            if (widget.showProfileButton)
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
                 ),
-                child: const Icon(Icons.person, size: 22),
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.accentBlue,
+                    border: Border.all(color: Colors.black),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: const [
+                      BoxShadow(offset: Offset(1, 1), color: Colors.black)
+                    ],
+                  ),
+                  child: const Icon(Icons.person, size: 22),
+                ),
               ),
-            ),
           ],
         ),
         if (_collegeName.isNotEmpty) ...[

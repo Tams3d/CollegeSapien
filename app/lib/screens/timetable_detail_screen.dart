@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/timetable_models.dart';
+import '../widgets/responsive_layout.dart';
 
 class TimetableDetailScreen extends StatefulWidget {
   final TimetableSubject subject;
@@ -15,23 +16,6 @@ class TimetableDetailScreen extends StatefulWidget {
 }
 
 class _TimetableDetailScreenState extends State<TimetableDetailScreen> {
-  String _selectedDay = 'MON';
-
-  final List<DaySchedule> _days = [
-    DaySchedule(day: 'MON', date: 12, isToday: true),
-    DaySchedule(day: 'TUE', date: 12, isToday: false),
-    DaySchedule(day: 'WED', date: 12, isToday: false),
-    DaySchedule(day: 'THU', date: 12, isToday: false),
-    DaySchedule(day: 'FRI', date: 12, isToday: false),
-    DaySchedule(day: 'SAT', date: 12, isToday: false),
-    DaySchedule(day: 'SUN', date: 12, isToday: false),
-  ];
-
-  List<TimetableClass> get _selectedDayClasses {
-    return widget.subject.classes.where((c) => c.day == _selectedDay).toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -49,20 +33,16 @@ class _TimetableDetailScreenState extends State<TimetableDetailScreen> {
               horizontal: screenWidth * 0.045,
               vertical: 20,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                _buildHeader(screenWidth),
-                const SizedBox(height: 30),
-
-                // Day selector
-                _buildDaySelector(),
-                const SizedBox(height: 30),
-
-                // Timeline with classes
-                _buildTimeline(screenWidth),
-              ],
+            child: MaxWidthContent(
+              maxWidth: 800,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 30),
+                  TimetableDetailView(subject: widget.subject),
+                ],
+              ),
             ),
           ),
         ),
@@ -70,7 +50,7 @@ class _TimetableDetailScreenState extends State<TimetableDetailScreen> {
     );
   }
 
-  Widget _buildHeader(double screenWidth) {
+  Widget _buildHeader() {
     return Row(
       children: [
         const Icon(Icons.calendar_today, size: 24, color: Colors.black),
@@ -96,6 +76,51 @@ class _TimetableDetailScreenState extends State<TimetableDetailScreen> {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+      ],
+    );
+  }
+}
+
+/// The day-selector + class timeline for a single subject, without any
+/// Scaffold/header chrome — embeddable both as the pushed detail screen's
+/// body (mobile/tablet) and as the right-hand pane of the desktop
+/// master-detail split view in [TimetableListScreen].
+class TimetableDetailView extends StatefulWidget {
+  final TimetableSubject subject;
+
+  const TimetableDetailView({super.key, required this.subject});
+
+  @override
+  State<TimetableDetailView> createState() => _TimetableDetailViewState();
+}
+
+class _TimetableDetailViewState extends State<TimetableDetailView> {
+  String _selectedDay = 'MON';
+
+  final List<DaySchedule> _days = [
+    DaySchedule(day: 'MON', date: 12, isToday: true),
+    DaySchedule(day: 'TUE', date: 12, isToday: false),
+    DaySchedule(day: 'WED', date: 12, isToday: false),
+    DaySchedule(day: 'THU', date: 12, isToday: false),
+    DaySchedule(day: 'FRI', date: 12, isToday: false),
+    DaySchedule(day: 'SAT', date: 12, isToday: false),
+    DaySchedule(day: 'SUN', date: 12, isToday: false),
+  ];
+
+  List<TimetableClass> get _selectedDayClasses {
+    return widget.subject.classes.where((c) => c.day == _selectedDay).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDaySelector(),
+        const SizedBox(height: 30),
+        _buildTimeline(screenWidth),
       ],
     );
   }

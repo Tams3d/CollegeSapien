@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +8,9 @@ import '../../services/cache_service.dart';
 import '../../services/resource_service.dart';
 import '../../providers/app_state_notifier.dart';
 import '../../utils/app_colors.dart';
+import '../../utils/app_spacing.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/responsive_layout.dart';
 import '../attendance_screen.dart';
 import '../auth/login_screen.dart';
 import '../resources/resources_hub_screen.dart';
@@ -188,57 +191,122 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     final user = AuthService.instance.currentUser;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.045,
-            vertical: 16,
+        child: ResponsiveLayout(
+          mobile: (_) => _mobileBody(context, user),
+          desktop: (_) => _desktopBody(context, user),
+        ),
+      ),
+    );
+  }
+
+  Widget _mobileBody(BuildContext context, User? user) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(
+        horizontal: screenWidth * 0.045,
+        vertical: 16,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 8),
+          _headerRow(context),
+          const SizedBox(height: 20),
+          _profileCard(user),
+          const SizedBox(height: 20),
+          _statsGrid(context),
+          const SizedBox(height: 30),
+          _menuColumn(context),
+          const SizedBox(height: 30),
+          _logoutButton(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _desktopBody(BuildContext context, User? user) {
+    final width = MediaQuery.of(context).size.width;
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(AppSpacing.pagePadding(width)),
+      child: MaxWidthContent(
+        maxWidth: 960,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _headerRow(context),
+            SizedBox(height: AppSpacing.sectionGap(width)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 340,
+                  child: Column(
+                    children: [
+                      _profileCard(user),
+                      const SizedBox(height: 20),
+                      _statsGrid(context),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _menuColumn(context),
+                      const SizedBox(height: 24),
+                      _logoutButton(context),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _headerRow(BuildContext context) {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: AppTheme.cardDecoration(
+              color: Colors.white,
+              shadowOffset: const Offset(2, 2),
+            ),
+            child: const Icon(
+              Icons.chevron_left,
+              size: 28,
+              color: Colors.black,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
+        ),
+        const SizedBox(width: 14),
+        const Text(
+          'Profile',
+          style: TextStyle(
+            fontFamily: 'Lexend Mega',
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
 
-              // Back button + title
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: AppTheme.cardDecoration(
-                        color: Colors.white,
-                        shadowOffset: const Offset(2, 2),
-                      ),
-                      child: const Icon(
-                        Icons.chevron_left,
-                        size: 28,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  const Text(
-                    'Profile',
-                    style: TextStyle(
-                      fontFamily: 'Lexend Mega',
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Profile card
-              Container(
+  Widget _profileCard(User? user) {
+    return Container(
                 width: double.infinity,
                 decoration: AppTheme.cardDecoration(
                   color: AppColors.primaryYellow,
@@ -420,150 +488,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 20),
+    );
+  }
 
-              // Stats — 2×2 grid
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Attendance',
-                      _attendanceStat,
-                      AppColors.accentGreen,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const AttendanceScreen()),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      'CGPA',
-                      _cgpaStat,
-                      AppColors.accentBlue,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const CgpaCalculatorScreen()),
-                      ).then((_) => _loadStats()),
-                      emptyHint: 'Tap to\ncalculate',
-                    ),
-                  ),
-                ],
+  Widget _statsGrid(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                'Attendance',
+                _attendanceStat,
+                AppColors.accentGreen,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AttendanceScreen()),
+                ),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSemesterCard(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const SyllabusSelectionScreen()),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Files Uploaded',
-                      _filesUploaded,
-                      AppColors.accentPurple,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const ResourcesHubScreen()),
-                      ),
-                    ),
-                  ),
-                ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                'CGPA',
+                _cgpaStat,
+                AppColors.accentBlue,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CgpaCalculatorScreen()),
+                ).then((_) => _loadStats()),
+                emptyHint: 'Tap to\ncalculate',
               ),
-              const SizedBox(height: 30),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSemesterCard(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const SyllabusSelectionScreen()),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                'Files Uploaded',
+                _filesUploaded,
+                AppColors.accentPurple,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const ResourcesHubScreen()),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-              // Menu Items
-              _buildMenuItem(
-                context,
-                'Settings',
-                Icons.settings,
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildMenuItem(
-                context,
-                'Help & Support',
-                Icons.help_outline,
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HelpScreen()),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildMenuItem(
-                context,
-                'About',
-                Icons.info_outline,
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AboutScreen()),
-                ),
-              ),
-              // mod: Admin Management menu item removed — moved to web admin panel
-              // if (_showAdminManagement) ...[
-              //   const SizedBox(height: 12),
-              //   _buildMenuItem(
-              //     context,
-              //     'Admin Management',
-              //     Icons.admin_panel_settings_outlined,
-              //     () => Navigator.push(
-              //       context,
-              //       MaterialPageRoute(builder: (_) => const AdminManagementScreen()),
-              //     ),
-              //   ),
-              // ],
-              const SizedBox(height: 30),
+  Widget _menuColumn(BuildContext context) {
+    return Column(
+      children: [
+        _buildMenuItem(
+          context,
+          'Settings',
+          Icons.settings,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildMenuItem(
+          context,
+          'Help & Support',
+          Icons.help_outline,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HelpScreen()),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildMenuItem(
+          context,
+          'About',
+          Icons.info_outline,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AboutScreen()),
+          ),
+        ),
+        // mod: Admin Management menu item removed — moved to web admin panel
+        // if (_showAdminManagement) ...[
+        //   const SizedBox(height: 12),
+        //   _buildMenuItem(
+        //     context,
+        //     'Admin Management',
+        //     Icons.admin_panel_settings_outlined,
+        //     () => Navigator.push(
+        //       context,
+        //       MaterialPageRoute(builder: (_) => const AdminManagementScreen()),
+        //     ),
+        //   ),
+        // ],
+      ],
+    );
+  }
 
-              // Logout Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    try {
-                      await AuthService.instance.signOut();
-                    } catch (_) {}
-                    if (!context.mounted) return;
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (_) => false,
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accentPink,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(color: Colors.black, width: 2),
-                    ),
-                  ),
-                  icon: const Icon(Icons.logout, color: Colors.black),
-                  label: const Text(
-                    'Logout',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+  Widget _logoutButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton.icon(
+        onPressed: () async {
+          try {
+            await AuthService.instance.signOut();
+          } catch (_) {}
+          if (!context.mounted) return;
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (_) => false,
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.accentPink,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: Colors.black, width: 2),
+          ),
+        ),
+        icon: const Icon(Icons.logout, color: Colors.black),
+        label: const Text(
+          'Logout',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
           ),
         ),
       ),
