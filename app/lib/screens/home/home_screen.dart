@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../../models/api_models.dart';
 import '../../models/timetable_models.dart';
 import '../../models/event_models.dart';
+import '../../services/api_service.dart';
 import '../../services/attendance_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/college_service.dart';
@@ -26,6 +27,7 @@ import '../syllabus/syllabus_selection_screen.dart';
 import '../timetable_list_screen.dart';
 import '../ai_features/resume_roast_screen.dart';
 import 'events_all_screen.dart';
+import 'create_event_screen.dart';
 import '../../providers/app_state_notifier.dart';
 
 // ─── Timetable class entry ────────────────────────────────────────────────────
@@ -476,6 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _loadingEvents = false;
         });
       }
+      return;
     }
 
     try {
@@ -522,9 +525,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _loadingEvents = false;
           });
         }
-      } else {
-        if (mounted) setState(() => _loadingEvents = false);
-      }
     } catch (_) {
       if (mounted) setState(() => _loadingEvents = false);
     }
@@ -565,9 +565,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
+              if (_semester >= 4) ...[
+                const SizedBox(height: 24),
+                _sectionHeader('AI Features'),
+                const SizedBox(height: 12),
+                _resumeRoastCard(),
+              ],
+              const SizedBox(height: 80),
+            ],
+          ),
+=======
         child: ResponsiveLayout(
           mobile: (_) => _mobileBody(context),
           desktop: (_) => _desktopBody(context),
+>>>>>>> origin/main
         ),
       ),
     );
@@ -737,6 +748,40 @@ class _HomeScreenState extends State<HomeScreen> {
     return [
       _sectionHeader(
         "Events Near You",
+        trailing: GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CreateEventScreen(),
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.primaryYellow,
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: const [
+                BoxShadow(offset: Offset(2, 2), color: Colors.black)
+              ],
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.add, size: 10, color: Colors.black),
+                SizedBox(width: 2),
+                Text(
+                  'SUGGEST',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.11,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         onShowAll: _hasMoreEvents
             ? () => Navigator.push(
                   context,
@@ -1676,7 +1721,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ─── Section header ────────────────────────────────────────────────────────
 
-  Widget _sectionHeader(String title, {VoidCallback? onShowAll}) {
+  Widget _sectionHeader(String title, {VoidCallback? onShowAll, Widget? trailing}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1690,30 +1735,38 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Color(0xFF191C1E),
           ),
         ),
-        if (onShowAll != null)
-          GestureDetector(
-            onTap: onShowAll,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.showAllButton,
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: const [
-                  BoxShadow(offset: Offset(1, 1), color: Colors.black)
-                ],
-              ),
-              child: const Text(
-                'SHOW ALL',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.11,
-                  color: Color(0xFF191C1E),
+        Row(
+          children: [
+            if (trailing != null) ...[
+              trailing,
+              if (onShowAll != null) const SizedBox(width: 8),
+            ],
+            if (onShowAll != null)
+              GestureDetector(
+                onTap: onShowAll,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.showAllButton,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: const [
+                      BoxShadow(offset: Offset(1, 1), color: Colors.black)
+                    ],
+                  ),
+                  child: const Text(
+                    'SHOW ALL',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.11,
+                      color: Color(0xFF191C1E),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
+          ],
+        ),
       ],
     );
   }

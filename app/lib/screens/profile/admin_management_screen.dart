@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/api_models.dart';
+import '../../models/event_models.dart';
 import '../../services/admin_service.dart';
 import '../../services/app_capability_service.dart';
 import '../../utils/app_colors.dart';
@@ -19,11 +20,13 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
   final _capabilityService = AppCapabilityService.instance;
   final Set<String> _reportActionsInFlight = <String>{};
   final Set<String> _userActionsInFlight = <String>{};
+  final Set<String> _eventActionsInFlight = <String>{};
 
   bool _loading = true;
   String? _error;
   AppCapabilities? _capabilities;
   List<AdminReport> _reports = [];
+  List<EventItem> _pendingEvents = [];
   List<AdminUser> _users = [];
 
   @override
@@ -52,16 +55,18 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
       }
 
       final reportsFuture = _adminService.listPendingReports();
+      final eventsFuture = _adminService.listPendingEvents();
       final usersFuture = capabilities.isSuperAdmin
           ? _adminService.listUsers()
           : Future.value(<AdminUser>[]);
-      final results = await Future.wait([reportsFuture, usersFuture]);
+      final results = await Future.wait([reportsFuture, eventsFuture, usersFuture]);
 
       if (!mounted) return;
       setState(() {
         _capabilities = capabilities;
         _reports = results[0] as List<AdminReport>;
-        _users = results[1] as List<AdminUser>;
+        _pendingEvents = results[1] as List<EventItem>;
+        _users = results[2] as List<AdminUser>;
         _loading = false;
       });
     } catch (e) {
@@ -239,6 +244,68 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
     return result;
   }
 
+  Future<void> _approveEvent(EventItem event) async {
+    if (event.id == null || _eventActionsInFlight.contains(event.id)) return;
+
+    setState(() => _eventActionsInFlight.add(event.id!));
+    try {
+      await _adminService.approveEvent(event.id!);
+      if (!mounted) return;
+
+      setState(() {
+        _pendingEvents.removeWhere((item) => item.id == event.id);
+      });
+      _showSnack('Event approved successfully', isError: false);
+    } catch (e) {
+      _showSnack(e.toString(), isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _eventActionsInFlight.remove(event.id!));
+      }
+    }
+  }
+
+  Future<void> _rejectEvent(EventItem event) async {
+    if (event.id == null || _eventActionsInFlight.contains(event.id)) return;
+
+    final shouldContinue = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Reject event?'),
+            content: Text('Are you sure you want to reject and archive "${event.eventName}"?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Confirm'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!shouldContinue) return;
+
+    setState(() => _eventActionsInFlight.add(event.id!));
+    try {
+      await _adminService.rejectEvent(event.id!);
+      if (!mounted) return;
+
+      setState(() {
+        _pendingEvents.removeWhere((item) => item.id == event.id);
+      });
+      _showSnack('Event rejected and archived', isError: false);
+    } catch (e) {
+      _showSnack(e.toString(), isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _eventActionsInFlight.remove(event.id!));
+      }
+    }
+  }
+
   void _showSnack(String message, {required bool isError}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -348,6 +415,8 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
           ),
           const SizedBox(height: 18),
           _buildReportSection(),
+          const SizedBox(height: 22),
+          _buildEventsSection(),
           if (_capabilities?.isSuperAdmin ?? false) ...[
             const SizedBox(height: 22),
             _buildUserSection(),
@@ -502,6 +571,111 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
           ElevatedButton(
             onPressed: isLoading ? null : () => _openAssignRoleDialog(user),
             child: Text(isLoading ? 'Saving...' : 'Assign Role'),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildEventsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Pending Events',
+          style: TextStyle(
+            fontFamily: 'Lexend Mega',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (_pendingEvents.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: AppTheme.cardDecoration(color: AppColors.accentBlue),
+            child: const Text('No pending events awaiting approval.'),
+          )
+        else
+          ..._pendingEvents.map(_buildEventCard),
+      ],
+    );
+  }
+
+  Widget _buildEventCard(EventItem event) {
+    final isLoading = event.id != null && _eventActionsInFlight.contains(event.id);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: AppTheme.cardDecoration(color: AppColors.accentBlue),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (event.communityLogo.isNotEmpty) ...[
+                CircleAvatar(
+                  radius: 16,
+                  backgroundImage: NetworkImage(event.communityLogo),
+                  backgroundColor: Colors.transparent,
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.eventName,
+                      style: const TextStyle(
+                        fontFamily: 'Public Sans',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      'By ${event.communityName}',
+                      style: TextStyle(
+                        fontFamily: 'Public Sans',
+                        fontSize: 12,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Date: ${event.eventDate}',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          Text('Location: ${event.location}'),
+          Text('Link: ${event.eventLink}'),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ElevatedButton(
+                onPressed: isLoading ? null : () => _approveEvent(event),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryYellow,
+                  foregroundColor: Colors.black,
+                ),
+                child: const Text('Approve'),
+              ),
+              OutlinedButton(
+                onPressed: isLoading ? null : () => _rejectEvent(event),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red.shade700,
+                  side: BorderSide(color: Colors.red.shade700, width: 2),
+                ),
+                child: const Text('Reject'),
+              ),
+            ],
           ),
         ],
       ),
