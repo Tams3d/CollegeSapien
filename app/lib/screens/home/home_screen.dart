@@ -663,8 +663,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _timetableSection(BuildContext context) {
     return [
       _sectionHeader("Today's Timetable", onShowAll: () {
-        Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const TimetableListScreen()));
+        // Switch the persistent bottom nav / rail to the Timetable tab
+        // instead of pushing a new route on top of it, so the nav chrome
+        // stays visible (same screen MainNavigation already shows at
+        // index 2 — see main_navigation.dart's _navItems).
+        if (widget.onTabSwitch != null) {
+          widget.onTabSwitch!(2);
+        } else {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const TimetableListScreen()));
+        }
       }),
       const SizedBox(height: 12),
       _timetableCarousel(),
