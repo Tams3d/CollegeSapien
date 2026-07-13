@@ -7,6 +7,7 @@ import '../../utils/app_spacing.dart';
 import '../../utils/breakpoints.dart';
 import '../../widgets/responsive_layout.dart';
 import '../../models/event_models.dart';
+import 'create_event_screen.dart';
 
 class EventsAllScreen extends StatelessWidget {
   final List<EventItem> events;
@@ -50,6 +51,41 @@ class EventsAllScreen extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.16,
                       color: Color(0xFF191C1E),
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CreateEventScreen(),
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryYellow,
+                        border: Border.all(color: Colors.black, width: 2),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: const [
+                          BoxShadow(offset: Offset(2, 2), color: Colors.black)
+                        ],
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.add, size: 16, color: Colors.black),
+                          SizedBox(width: 4),
+                          Text(
+                            'SUGGEST',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
