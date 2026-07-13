@@ -1,10 +1,27 @@
 import '../models/api_models.dart';
+import '../models/event_models.dart';
 import 'api_service.dart';
 
 class AdminService {
   AdminService._();
 
   static final AdminService instance = AdminService._();
+
+  Future<List<EventItem>> listPendingEvents() async {
+    final json =
+        await ApiService.instance.get('/events/pending') as List<dynamic>;
+    return json
+        .map((item) => EventItem.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> approveEvent(String eventId) async {
+    await ApiService.instance.patch('/events/$eventId/approve', {});
+  }
+
+  Future<void> rejectEvent(String eventId) async {
+    await ApiService.instance.patch('/events/$eventId/reject', {});
+  }
 
   Future<List<AdminReport>> listPendingReports() async {
     final json =
